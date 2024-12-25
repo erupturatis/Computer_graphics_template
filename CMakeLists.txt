@@ -13,7 +13,17 @@ add_executable(computer_graphics
         tiny_obj_loader.cpp
         BoundingBoxes.cpp
         pure_functions.cpp
+        CameraAnimation.cpp
         Window.cpp
+        Mouse.cpp
+        GlobalConfigs.cpp
+        GlobalObjects.cpp
+        Bindings.cpp
+        Bindings.h
+        Callbacks.cpp
+        Callbacks.h
+        Scene.cpp
+        Scene.h
 )
 
 target_include_directories(computer_graphics PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs)

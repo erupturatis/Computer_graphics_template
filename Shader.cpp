@@ -1,14 +1,6 @@
-//
-//  Shader.cpp
-//  Lab3
-//
-//  Created by CGIS on 05/10/2016.
-//  Copyright © 2016 CGIS. All rights reserved.
-//
-
 #include "Shader.hpp"
 
-namespace gps
+namespace globals
 {
     std::string Shader::readShaderFile(std::string fileName) {
         std::ifstream shaderFile;

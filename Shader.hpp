@@ -1,28 +1,18 @@
-//
-//  Shader.hpp
-//  Lab3
-//
-//  Created by CGIS on 05/10/2016.
-//  Copyright © 2016 CGIS. All rights reserved.
-//
-
 #ifndef Shader_hpp
 #define Shader_hpp
 
-#if defined (__APPLE__)
-    #define GL_SILENCE_DEPRECATION
-    #include <OpenGL/gl3.h>
-#else
+#ifndef GLEW_STATIC
 #define GLEW_STATIC
-#include <GL/glew.h>
 #endif
 
-#include <fstream>
-#include <sstream>
 #include <iostream>
+#include <string>
+#include <sstream>
+#include <GL/glew.h>
+#include <fstream>
 
 
-namespace gps
+namespace globals
 {
     class Shader
     {

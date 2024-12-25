@@ -1,8 +1,8 @@
 #include "Camera.hpp"
 
-namespace gps
+namespace globals
 {
-    Camera::Camera(glm::vec3 cameraPosition, glm::vec3 cameraTarget, glm::vec3 cameraUp) {
+    void Camera::initializeCamera(glm::vec3 cameraPosition, glm::vec3 cameraTarget, glm::vec3 cameraUp) {
         this->cameraPosition = cameraPosition;
         this->cameraTarget = cameraTarget;
         this->cameraUpDirection = cameraUp;
@@ -12,7 +12,6 @@ namespace gps
     }
 
     glm::mat4 Camera::getViewMatrix() {
-        //TODO
         return glm::lookAt(cameraPosition, cameraTarget, this->cameraUpDirection);
     }
 

@@ -1,6 +1,6 @@
 #include "Mesh.hpp"
 
-namespace gps
+namespace globals
 {
 	/* Mesh Constructor */
 	Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vector<Texture> textures) {
@@ -15,12 +15,12 @@ namespace gps
 		return this->buffers;
 	}
 
-	std::vector<Vertex> gps::Mesh::getVertices() const {
+	std::vector<Vertex> globals::Mesh::getVertices() const {
 		return this->vertices;
 	}
 
 	/* Mesh drawing function - also applies associated textures */
-	void Mesh::Draw(gps::Shader shader) {
+	void Mesh::Draw(globals::Shader shader) {
 		shader.useShaderProgram();
 
 		//set textures

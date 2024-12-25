@@ -1,18 +1,24 @@
 #include "GlobalConfigs.h"
+#include <GL/glew.h>
 
-GlobalConfigs* GlobalConfigs::instance = nullptr;
+namespace globals_configs
+{
+    bool showBoundingBoxes;
+    GLfloat cameraSpeed = 0.1f;
 
-GlobalConfigs& GlobalConfigs::getInstance() {
-    if (instance == nullptr) {
-        instance = new GlobalConfigs();
+    bool getShowBoundingBoxes() {
+        return globals_configs::showBoundingBoxes;
     }
-    return *instance;
-}
 
-bool GlobalConfigs::getShowBoundingBoxes() const {
-    return showBoundingBoxes;
-}
+    void setShowBoundingBoxes(bool show) {
+        globals_configs::showBoundingBoxes = show;
+    }
 
-void GlobalConfigs::setShowBoundingBoxes(bool show) {
-    showBoundingBoxes = show;
+    GLfloat getCameraSpeed() {
+        return globals_configs::cameraSpeed;
+    }
+
+    void setCameraSpeed(GLfloat speed) {
+        globals_configs::cameraSpeed = speed;
+    }
 }

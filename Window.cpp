@@ -1,6 +1,6 @@
 #include "Window.h"
 
-namespace gps {
+namespace globals {
     void Window::Create(int width, int height, const char *title) {
         if (!glfwInit()) {
             throw std::runtime_error("Could not start GLFW3!");

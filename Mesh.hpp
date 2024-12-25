@@ -1,14 +1,11 @@
 #ifndef Mesh_hpp
 #define Mesh_hpp
 
-#if defined (__APPLE__)
-    #define GL_SILENCE_DEPRECATION
-    #include <OpenGL/gl3.h>
-#else
+#ifndef GLEW_STATIC
 #define GLEW_STATIC
-#include <GL/glew.h>
 #endif
 
+#include <GL/glew.h>
 #include <glm/glm.hpp>
 
 #include "Shader.hpp"
@@ -17,7 +14,7 @@
 #include <vector>
 
 
-namespace gps
+namespace globals
 {
     struct Vertex
     {
@@ -59,7 +56,7 @@ namespace gps
 
         Buffers getBuffers();
 
-        void Draw(gps::Shader shader);
+        void Draw(globals::Shader shader);
 
         std::vector<Vertex> getVertices() const;
 

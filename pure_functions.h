@@ -2,10 +2,13 @@
 #define PURE_FUNCTIONS_H
 
 #include "BoundingBoxes.h"
-#include "tiny_obj_loader.h"
+#include "glm/glm.hpp"
 
-namespace gps{
-    gps::BoundingBox3D computeBoundingBox(const std::vector<gps::Vertex>& vertices);
+namespace globals
+{
+	BoundingBox3D computeBoundingBox(const std::vector<globals::Vertex>& vertices);
+
+	float calculateVerticalAngle(const glm::vec3& forwardDir);
 }
 
 #endif

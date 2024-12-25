@@ -1,8 +1,12 @@
 #include "Model3D.hpp"
 #include "BoundingBoxes.h"
+#include "Camera.hpp"
+#include "GlobalObjects.h"
 #include "pure_functions.h"
 
-namespace gps
+#include <glm/gtx/string_cast.hpp>
+
+namespace globals
 {
 	void Model3D::LoadModel(std::string fileName) {
 		std::string basePath = fileName.substr(0, fileName.find_last_of('/')) + "/";
@@ -10,8 +14,8 @@ namespace gps
 
 		// we want to calculate bounding boxes for each mesh
 		for (int i = 0; i < meshes.size(); i++) {
-			std::vector<gps::Vertex> vertices = meshes[i].getVertices();
-			gps::BoundingBox3D boundingBox = gps::computeBoundingBox(vertices);
+			std::vector<globals::Vertex> vertices = meshes[i].getVertices();
+			globals::BoundingBox3D boundingBox = globals::computeBoundingBox(vertices);
 			bounding_boxes.push_back(boundingBox);
 		}
 	}
@@ -21,13 +25,27 @@ namespace gps
 	}
 
 	// Draw each mesh from the model
-	void Model3D::Draw(gps::Shader shaderProgram) {
+	void Model3D::Draw(globals::Shader shaderProgram) {
 		for (int i = 0; i < meshes.size(); i++)
 			meshes[i].Draw(shaderProgram);
 	}
 
-	const std::vector<gps::Mesh>& gps::Model3D::getSubObjects() const {
-		return meshes;
+	void Model3D::setModelMatrix(glm::mat4 modelMatrix) {
+		this->modelMatrix = modelMatrix;
+	}
+
+	glm::mat4 Model3D::getModelMatrix() {
+		return modelMatrix;
+	}
+
+	void Model3D::recalculateNormal() {
+		Camera& myCamera = getCamera();
+		glm::mat4 view = myCamera.getViewMatrix();
+		this->normalMatrix = glm::mat3(glm::inverseTranspose(view * modelMatrix));
+	}
+
+	glm::mat3 Model3D::getNormalMatrix() {
+		return normalMatrix;
 	}
 
 	// Does the parsing of the .obj file and fills in the data structure
@@ -55,9 +73,9 @@ namespace gps
 
 		// Loop over shapes
 		for (size_t s = 0; s < shapes.size(); s++) {
-			std::vector<gps::Vertex> vertices;
+			std::vector<globals::Vertex> vertices;
 			std::vector<GLuint> indices;
-			std::vector<gps::Texture> textures;
+			std::vector<globals::Texture> textures;
 
 			// Loop over faces(polygon)
 			size_t index_offset = 0;
@@ -90,7 +108,7 @@ namespace gps
 					glm::vec3 vertexNormal(nx, ny, nz);
 					glm::vec2 vertexTexCoords(tx, ty);
 
-					gps::Vertex currentVertex;
+					globals::Vertex currentVertex;
 					currentVertex.Position = vertexPosition;
 					currentVertex.Normal = vertexNormal;
 					currentVertex.TexCoords = vertexTexCoords;
@@ -110,7 +128,7 @@ namespace gps
 			if (a > 0 && materials.size() > 0) {
 				materialId = shapes[s].mesh.material_ids[0];
 				if (materialId != -1) {
-					gps::Material currentMaterial;
+					globals::Material currentMaterial;
 					currentMaterial.ambient = glm::vec3(materials[materialId].ambient[0],
 					                                    materials[materialId].ambient[1],
 					                                    materials[materialId].ambient[2]);
@@ -125,7 +143,7 @@ namespace gps
 					std::string ambientTexturePath = materials[materialId].ambient_texname;
 
 					if (!ambientTexturePath.empty()) {
-						gps::Texture currentTexture;
+						globals::Texture currentTexture;
 						currentTexture = LoadTexture(basePath + ambientTexturePath, "ambientTexture");
 						textures.push_back(currentTexture);
 					}
@@ -134,7 +152,7 @@ namespace gps
 					std::string diffuseTexturePath = materials[materialId].diffuse_texname;
 
 					if (!diffuseTexturePath.empty()) {
-						gps::Texture currentTexture;
+						globals::Texture currentTexture;
 						currentTexture = LoadTexture(basePath + diffuseTexturePath, "diffuseTexture");
 						textures.push_back(currentTexture);
 					}
@@ -143,19 +161,19 @@ namespace gps
 					std::string specularTexturePath = materials[materialId].specular_texname;
 
 					if (!specularTexturePath.empty()) {
-						gps::Texture currentTexture;
+						globals::Texture currentTexture;
 						currentTexture = LoadTexture(basePath + specularTexturePath, "specularTexture");
 						textures.push_back(currentTexture);
 					}
 				}
 			}
 
-			meshes.push_back(gps::Mesh(vertices, indices, textures));
+			meshes.push_back(globals::Mesh(vertices, indices, textures));
 		}
 	}
 
 	// Retrieves a texture associated with the object - by its name and type
-	gps::Texture Model3D::LoadTexture(std::string path, std::string type) {
+	globals::Texture Model3D::LoadTexture(std::string path, std::string type) {
 		for (int i = 0; i < loadedTextures.size(); i++) {
 			if (loadedTextures[i].path == path) {
 				//already loaded texture
@@ -163,7 +181,7 @@ namespace gps
 			}
 		}
 
-		gps::Texture currentTexture;
+		globals::Texture currentTexture;
 		currentTexture.id = ReadTextureFromFile(path.c_str());
 		currentTexture.type = std::string(type);
 		currentTexture.path = path;
