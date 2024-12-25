@@ -5,6 +5,8 @@
 
 namespace globals
 {
+	void initializeBoundingBoxGPU();
+
 	class BoundingBox3D
 	{
 	public:
@@ -12,7 +14,7 @@ namespace globals
 
 		void setBoundingBox(glm::vec3 min, glm::vec3 max);
 
-		void Draw(globals::Shader shaderProgram);
+		void Draw();
 
 	private:
 		globals::Vertex min, max;

@@ -1,5 +1,5 @@
-#include "Model3D.hpp"
 #include "BoundingBoxes.h"
+#include "Model3D.hpp"
 #include "Camera.hpp"
 #include "GlobalObjects.h"
 #include "pure_functions.h"
@@ -13,21 +13,32 @@ namespace globals
 		ReadOBJ(fileName, basePath);
 
 		// we want to calculate bounding boxes for each mesh
-		for (int i = 0; i < meshes.size(); i++) {
-			std::vector<globals::Vertex> vertices = meshes[i].getVertices();
-			globals::BoundingBox3D boundingBox = globals::computeBoundingBox(vertices);
-			bounding_boxes.push_back(boundingBox);
-		}
+		// for (int i = 0; i < meshes.size(); i++) {
+		// 	std::vector<globals::Vertex> vertices = meshes[i].getVertices();
+		// 	globals::BoundingBox3D boundingBox = globals::computeBoundingBox(vertices);
+		// 	bounding_boxes.push_back(boundingBox);
+		// }
 	}
 
 	void Model3D::LoadModel(std::string fileName, std::string basePath) {
 		ReadOBJ(fileName, basePath);
 	}
 
+	void Model3D::initializeBoundingBoxGPU() {
+		// TODO
+		// bounding_boxes.initializeBoundingBoxGPU();
+	}
+
+	void Model3D::setBoundingBox(glm::vec3 min, glm::vec3 max) {
+		bounding_boxes.setBoundingBox(min, max);
+	}
+
 	// Draw each mesh from the model
 	void Model3D::Draw(globals::Shader shaderProgram) {
 		for (int i = 0; i < meshes.size(); i++)
 			meshes[i].Draw(shaderProgram);
+
+		this->bounding_boxes.Draw();
 	}
 
 	void Model3D::setModelMatrix(glm::mat4 modelMatrix) {

@@ -205,6 +205,12 @@ void initObjectsScene() {
 	glm::mat4 model_rotation = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
 	teapot.setModelMatrix(model_rotation);
 
+	globals::initializeBoundingBoxGPU();
+	float scale = 0.5f;
+	glm::vec3 min = glm::vec3(-1.0f, -1.0f, -1.0f) * scale;
+	glm::vec3 max = glm::vec3(1.0f, 1.0f, 1.0f) * scale;
+	teapot.setBoundingBox(min, max);
+
 	scene::recalculateNormals();
 }
 
@@ -218,16 +224,18 @@ void renderTeapot() {
 	float teapotScale = 1.0f;
 	float time = glfwGetTime() * 10.0f;
 
+	// whatever transformations we want to apply to the teapot
 	glm::mat4 transformation_scaling = glm::scale(glm::mat4(1.0f), glm::vec3(teapotScale));
 	glm::mat4 transformation_rotation = glm::rotate(glm::mat4(1.0f), glm::radians(time), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 transformation = transformation_rotation * transformation_scaling;
 	teapot.setModelMatrix(transformation);
 
+	// update matrices for this object
 	glUniformMatrix4fv(shaderLocations.modelLoc, 1, GL_FALSE, glm::value_ptr(teapot.getModelMatrix()));
 	glUniformMatrix3fv(shaderLocations.normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(teapot.getNormalMatrix()));
-
-
 	teapot.Draw(shader);
+
+	// optinally draw the associated bounding box
 }
 
 void renderScene() {

@@ -16,6 +16,7 @@ add_executable(computer_graphics
         CameraAnimation.cpp
         Window.cpp
         Mouse.cpp
+        BoundingBoxes.h
         GlobalConfigs.cpp
         GlobalObjects.cpp
         Bindings.cpp

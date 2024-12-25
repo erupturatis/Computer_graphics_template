@@ -35,9 +35,13 @@ namespace globals
 
 		glm::mat3 getNormalMatrix();
 
+		void initializeBoundingBoxGPU();
+
+		void setBoundingBox(glm::vec3 min, glm::vec3 max);
+
 	private:
 		std::vector<globals::Mesh> meshes;
-		std::vector<globals::BoundingBox3D> bounding_boxes;
+		BoundingBox3D bounding_boxes;
 
 		std::vector<globals::Texture> loadedTextures;
 
