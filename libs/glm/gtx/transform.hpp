@@ -14,10 +14,13 @@
 /// Add transformation matrices
 
 #pragma once
+#define GLM_ENABLE_EXPERIMENTAL
 
 // Dependency:
 #include "../glm.hpp"
 #include "../gtc/matrix_transform.hpp"
+
+// #include <glm/gtx/transform.hpp>
 
 #ifndef GLM_ENABLE_EXPERIMENTAL
 #	error "GLM: GLM_GTX_transform is an experimental extension and may change in the future. Use #define GLM_ENABLE_EXPERIMENTAL before including it, if you really want to use it."
