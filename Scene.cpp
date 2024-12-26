@@ -14,4 +14,8 @@ namespace scene
             model->recalculateNormal();
         }
     }
+
+    std::vector<globals::Model3D*>& getModels3D() {
+        return models;
+    }
 }

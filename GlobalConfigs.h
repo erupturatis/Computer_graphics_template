@@ -10,6 +10,9 @@ namespace globals_configs
 
     GLfloat getCameraSpeed();
     void setCameraSpeed(GLfloat speed);
+
+    bool getWireframeMode();
+    void setWireframeMode(bool wireframe);
 }
 
 #endif // GLOBAL_CONFIGS_H

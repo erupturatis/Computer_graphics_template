@@ -6,6 +6,7 @@ namespace scene
 {
     void registerModel(globals::Model3D& model);
     void recalculateNormals();
+    std::vector<globals::Model3D*>& getModels3D();
 }
 
 #endif //SCENE_H

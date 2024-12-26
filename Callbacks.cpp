@@ -26,6 +26,11 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 		globals_configs::setShowBoundingBoxes(!currentSetting);
 	}
 
+	if (key == GLFW_KEY_C && action == GLFW_PRESS) {
+		bool currentSetting = globals_configs::getWireframeMode();
+		globals_configs::setWireframeMode(!currentSetting);
+	}
+
 	globals::registerKeyPress(key, action);
 }
 

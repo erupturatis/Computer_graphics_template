@@ -19,6 +19,10 @@ namespace globals
 		ReadOBJ(fileName, basePath);
 	}
 
+	std::vector<BoundingBox3D>& Model3D::getBoundingBoxes() {
+		return bounding_boxes;
+	}
+
 	void Model3D::initializeBoundingBoxes() {
 		// We use only once to fill the array
 		if (bounding_boxes.size() != 0) {
@@ -31,8 +35,6 @@ namespace globals
 			globals::BoundingBox3D boundingBox = BoundingBox3D();
 			bounding_boxes.push_back(boundingBox);
 		}
-
-		std::cout << "Final number of bounding boxes" << bounding_boxes.size() << std::endl;
 	}
 
 	void Model3D::calculateBoundingBoxes() {
@@ -64,49 +66,14 @@ namespace globals
 
 			std::vector<glm::vec3> transformedCorners;
 
+			float collisionBoxScale = 1.1f;
 			// contraction for bounding box
-			glm::mat4 transformation_scaling = glm::scale(glm::mat4(1.0f), glm::vec3(0.75));
+			glm::mat4 transformation_scaling = glm::scale(glm::mat4(1.0f), glm::vec3(collisionBoxScale));
 
 			for (glm::vec3 corner : corners) {
 				transformedCorners.push_back(glm::vec3(modelMatrix * transformation_scaling * glm::vec4(corner, 1.0f)));
 			}
 			bounding_boxes[i].setBoundingBoxCorners(transformedCorners);
-
-			// float scale = 0.5f;
-			// glm::vec3 min = glm::vec3(-1, -1, -1) * scale;
-			// glm::vec3 max = glm::vec3(1, 1, 1) * scale;
-			// // std::cout << "Min: " << glm::to_string(min_max.first) << " Max: " << glm::to_string(min_max.second) <<
-			// // 	std::endl;
-			// min = glm::vec3(modelMatrix * glm::vec4(min, 1.0f));
-			// max = glm::vec3(modelMatrix * glm::vec4(max, 1.0f));
-			//
-			// bounding_boxes[i].setBoundingBox(min, max);
-			//
-			//
-			// float scale = 0.5f;
-			// glm::vec3 localMin = glm::vec3(-1, -1, -1) * scale;
-			// glm::vec3 localMax = glm::vec3(1, 1, 1) * scale;
-			//
-			// glm::mat4 modelMatrix = getModelMatrix();
-			// std::vector<glm::vec3> transformedCorners;
-			//
-			// glm::vec3 corners[] = {
-			// 	{localMin.x, localMin.y, localMin.z},
-			// 	{localMax.x, localMin.y, localMin.z},
-			// 	{localMax.x, localMax.y, localMin.z},
-			// 	{localMin.x, localMax.y, localMin.z},
-			// 	{localMin.x, localMin.y, localMax.z},
-			// 	{localMax.x, localMin.y, localMax.z},
-			// 	{localMax.x, localMax.y, localMax.z},
-			// 	{localMin.x, localMax.y, localMax.z}
-			// };
-			//
-			// // Transform each corner
-			// for (glm::vec3 corner : corners) {
-			// 	transformedCorners.push_back(glm::vec3(modelMatrix * glm::vec4(corner, 1.0f)));
-			// }
-
-			// bounding_boxes[i].setBoundingBoxCorners(transformedCorners);
 		}
 	}
 
@@ -121,7 +88,8 @@ namespace globals
 	}
 
 	void Model3D::setBoundingBox(glm::vec3 min, glm::vec3 max, int index) {
-		bounding_boxes[index].setBoundingBox(min, max);
+		std::cerr << "DEPRECATED SET BOUNDING BOX";
+		// bounding_boxes[index].setBoundingBox(min, max);
 	}
 
 	// Draw each mesh from the model

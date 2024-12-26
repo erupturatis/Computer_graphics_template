@@ -23,6 +23,7 @@ namespace globals
 
         void updatePitchYawFromTarget();
         glm::vec3 getPosition();
+        glm::vec3 getNextPosition(MOVE_DIRECTION direction, float speed);
 
     private:
         glm::vec3 cameraPosition;

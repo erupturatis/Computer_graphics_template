@@ -13,8 +13,10 @@ namespace cameraAnimation
 	bool isAnimating = false;
 	float animationProgress = 0.0f;
 	float duration = 2.0f;
+	float max_distance = 25.0f;
 
 	void startCameraAnimation(glm::vec3 initialPosition, glm::vec3 focusPoint) {
+		if (isAnimating) return;
 		cameraAnimation::isAnimating = true;
 		cameraAnimation::animationProgress = 0.0f;
 		cameraAnimation::initialPosition = initialPosition;
@@ -34,7 +36,7 @@ namespace cameraAnimation
 			isAnimating = false;
 		}
 
-		float distance = sin(glm::radians(180.0f * animationProgress)) * 10.0f;
+		float distance = sin(glm::radians(180.0f * animationProgress)) * max_distance;
 		glm::vec3 newPosition;
 		float distance_x = distance * -forwardDirection.x;
 		float distance_z = distance * -forwardDirection.z;

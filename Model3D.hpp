@@ -3,10 +3,8 @@
 
 #include "Mesh.hpp"
 #include "BoundingBox.h"
-
 #include "tiny_obj_loader.h"
 #include "stb_image.h"
-
 #include <iostream>
 #include <string>
 #include <vector>
@@ -38,6 +36,8 @@ namespace globals
 		void bindBoundingBoxesGPU();
 
 		void setBoundingBox(glm::vec3 min, glm::vec3 max, int index);
+
+		std::vector<BoundingBox3D>& getBoundingBoxes();
 
 		void initializeBoundingBoxes();
 

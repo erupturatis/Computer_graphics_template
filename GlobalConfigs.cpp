@@ -5,6 +5,15 @@ namespace globals_configs
 {
     bool showBoundingBoxes = true;
     GLfloat cameraSpeed = 0.1f;
+    bool wireframeMode = false;
+
+    bool getWireframeMode() {
+        return globals_configs::wireframeMode;
+    }
+
+    void setWireframeMode(bool wireframe) {
+        globals_configs::wireframeMode = wireframe;
+    }
 
     bool getShowBoundingBoxes() {
         return globals_configs::showBoundingBoxes;

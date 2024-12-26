@@ -15,6 +15,29 @@ namespace globals
         return glm::lookAt(cameraPosition, cameraTarget, this->cameraUpDirection);
     }
 
+    glm::vec3 Camera::getNextPosition(MOVE_DIRECTION direction, float speed) {
+        glm::vec3 cameraDirection = glm::normalize(cameraTarget - cameraPosition);
+        glm::vec3 cameraRight = glm::normalize(glm::cross(cameraDirection, cameraUpDirection));
+        // copies old position
+        glm::vec3 nextPosition = cameraPosition;
+
+        switch (direction) {
+        case MOVE_FORWARD:
+            nextPosition += cameraDirection * speed;
+            break;
+        case MOVE_BACKWARD:
+            nextPosition -= cameraDirection * speed;
+            break;
+        case MOVE_LEFT:
+            nextPosition -= cameraRight * speed;
+            break;
+        case MOVE_RIGHT:
+            nextPosition += cameraRight * speed;
+            break;
+        }
+        return nextPosition;
+    }
+
     void Camera::move(MOVE_DIRECTION direction, float speed) {
         glm::vec3 cameraDirection = glm::normalize(cameraTarget - cameraPosition);
         glm::vec3 cameraRight = glm::normalize(glm::cross(cameraDirection, cameraUpDirection));

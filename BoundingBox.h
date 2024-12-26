@@ -13,6 +13,7 @@ namespace globals
 		void initializeBoundingBoxGPU();
 		void setBoundingBox(glm::vec3 min, glm::vec3 max);
 		void setBoundingBoxCorners(std::vector<glm::vec3> vertices);
+		bool checkCollision(glm::vec3);
 
 		void Draw();
 
@@ -25,6 +26,8 @@ namespace globals
 			4, 5, 5, 6, 6, 7, 7, 4,
 			0, 4, 1, 5, 2, 6, 3, 7
 		};
+
+		glm::vec3 corners[8];
 	};
 }
 
