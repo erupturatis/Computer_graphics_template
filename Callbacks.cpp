@@ -1,5 +1,7 @@
 #include "Callbacks.h"
 #include <cstdio>
+
+#include "Bindings.h"
 #include "CameraAnimation.h"
 #include "GlobalObjects.h"
 
@@ -17,6 +19,11 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 
 	if (key == GLFW_KEY_V && action == GLFW_PRESS) {
 		cameraAnimation::startCameraAnimation(myCamera.getPosition(), myCamera.getTarget());
+	}
+
+	if (key == GLFW_KEY_B && action == GLFW_PRESS) {
+		bool currentSetting = globals_configs::getShowBoundingBoxes();
+		globals_configs::setShowBoundingBoxes(!currentSetting);
 	}
 
 	globals::registerKeyPress(key, action);

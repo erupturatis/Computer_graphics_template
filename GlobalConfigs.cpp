@@ -3,7 +3,7 @@
 
 namespace globals_configs
 {
-    bool showBoundingBoxes;
+    bool showBoundingBoxes = true;
     GLfloat cameraSpeed = 0.1f;
 
     bool getShowBoundingBoxes() {

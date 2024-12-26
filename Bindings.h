@@ -5,7 +5,7 @@
 #include "GlobalObjects.h"
 
 
-void bindWindowCallbacks();
+void bindWindowAndKeyboardCallbacks();
 void setMatrixViewBasicShader();
 void setMatrixProjectionBasicShader();
 

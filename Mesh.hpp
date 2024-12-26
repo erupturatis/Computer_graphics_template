@@ -60,6 +60,8 @@ namespace globals
 
         std::vector<Vertex> getVertices() const;
 
+        std::vector<GLuint> getIndices();
+
     private:
         /*  Render data  */
         Buffers buffers;

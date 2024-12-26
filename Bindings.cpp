@@ -4,7 +4,7 @@
 #include "glm/glm.hpp"
 #include <glm/gtc/type_ptr.hpp>
 
-void bindWindowCallbacks() {
+void bindWindowAndKeyboardCallbacks() {
 	globals::Window& myWindow = globals::getWindow();
 
 	glfwSetWindowSizeCallback(myWindow.getWindow(), windowResizeCallback);

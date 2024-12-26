@@ -2,7 +2,7 @@
 #define Model3D_hpp
 
 #include "Mesh.hpp"
-#include "BoundingBoxes.h"
+#include "BoundingBox.h"
 
 #include "tiny_obj_loader.h"
 #include "stb_image.h"
@@ -35,13 +35,17 @@ namespace globals
 
 		glm::mat3 getNormalMatrix();
 
-		void initializeBoundingBoxGPU();
+		void bindBoundingBoxesGPU();
 
-		void setBoundingBox(glm::vec3 min, glm::vec3 max);
+		void setBoundingBox(glm::vec3 min, glm::vec3 max, int index);
+
+		void initializeBoundingBoxes();
+
+		void calculateBoundingBoxes();
 
 	private:
 		std::vector<globals::Mesh> meshes;
-		BoundingBox3D bounding_boxes;
+		std::vector<BoundingBox3D> bounding_boxes;
 
 		std::vector<globals::Texture> loadedTextures;
 

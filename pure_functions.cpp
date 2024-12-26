@@ -1,25 +1,32 @@
 #include "pure_functions.h"
+#include <bits/stdc++.h>
 
 namespace globals
 {
-    BoundingBox3D computeBoundingBox(const std::vector<globals::Vertex>& vertices) {
+    std::pair<glm::vec3, glm::vec3> calculateBoundingBox(const std::vector<globals::Vertex>& vertices) {
         if (vertices.empty()) {
-            globals::BoundingBox3D box = globals::BoundingBox3D();
-            box.setBoundingBox(glm::vec3(0.0f), glm::vec3(0.0f));
+            std::cerr << "No vertices to compute bounding box" << std::endl;
+            return std::make_pair(glm::vec3(0.0f), glm::vec3(0.0f));
         }
 
         glm::vec3 min = vertices[0].Position;
-        glm::vec3 max = min;
+        glm::vec3 max = vertices[0].Position;
 
         for (size_t i = 1; i < vertices.size(); ++i) {
             glm::vec3 vertex = vertices[i].Position;
-            min = glm::min(min, vertex);
-            max = glm::max(max, vertex);
+            min = glm::vec3(
+                std::min(min.x, vertex.x),
+                std::min(min.y, vertex.y),
+                std::min(min.z, vertex.z)
+            );
+            max = glm::vec3(
+                std::max(max.x, vertex.x),
+                std::max(max.y, vertex.y),
+                std::max(max.z, vertex.z)
+            );
         }
 
-        globals::BoundingBox3D box = globals::BoundingBox3D();
-        box.setBoundingBox(min, max);
-        return box;
+        return std::make_pair(min, max);
     }
 
     float calculateVerticalAngle(const glm::vec3& forwardDir) {

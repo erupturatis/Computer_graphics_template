@@ -59,9 +59,6 @@ GLenum glCheckError_(const char* file, int line) {
 
 #define glCheckError() glCheckError_(__FILE__, __LINE__)
 
-glm::mat3 normalMatrix;
-glm::mat4 model;
-
 void processCameraMovement() {
 	globals::Camera& myCamera = globals::getCamera();
 	float cameraSpeed = globals_configs::getCameraSpeed();
@@ -70,8 +67,6 @@ void processCameraMovement() {
 		myCamera.move(globals::MOVE_FORWARD, cameraSpeed);
 		setMatrixViewBasicShader();
 		scene::recalculateNormals();
-		// glm::mat4 view = myCamera.getViewMatrix();
-		// normalMatrix = glm::mat3(glm::inverseTranspose(view * model));
 	}
 
 	if (globals::isKeyPressed(GLFW_KEY_S)) {
@@ -205,11 +200,14 @@ void initObjectsScene() {
 	glm::mat4 model_rotation = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
 	teapot.setModelMatrix(model_rotation);
 
-	globals::initializeBoundingBoxGPU();
-	float scale = 0.5f;
-	glm::vec3 min = glm::vec3(-1.0f, -1.0f, -1.0f) * scale;
-	glm::vec3 max = glm::vec3(1.0f, 1.0f, 1.0f) * scale;
-	teapot.setBoundingBox(min, max);
+	teapot.initializeBoundingBoxes();
+	teapot.bindBoundingBoxesGPU();
+	teapot.calculateBoundingBoxes();
+
+	// float scale = 0.5f;
+	// glm::vec3 min = glm::vec3(-1.0f, -1.0f, -1.0f) * scale;
+	// glm::vec3 max = glm::vec3(1.0f, 1.0f, 1.0f) * scale;
+	// teapot.setBoundingBox(min, max);
 
 	scene::recalculateNormals();
 }
@@ -227,15 +225,18 @@ void renderTeapot() {
 	// whatever transformations we want to apply to the teapot
 	glm::mat4 transformation_scaling = glm::scale(glm::mat4(1.0f), glm::vec3(teapotScale));
 	glm::mat4 transformation_rotation = glm::rotate(glm::mat4(1.0f), glm::radians(time), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 transformation = transformation_rotation * transformation_scaling;
+	glm::mat4 transformation_translation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, time / 20));
+
+	glm::mat4 transformation = transformation_translation * transformation_rotation * transformation_scaling;
 	teapot.setModelMatrix(transformation);
 
 	// update matrices for this object
 	glUniformMatrix4fv(shaderLocations.modelLoc, 1, GL_FALSE, glm::value_ptr(teapot.getModelMatrix()));
 	glUniformMatrix3fv(shaderLocations.normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(teapot.getNormalMatrix()));
-	teapot.Draw(shader);
 
-	// optinally draw the associated bounding box
+	teapot.calculateBoundingBoxes();
+	teapot.Draw(shader);
+	// optional draw the associated bounding box
 }
 
 void renderScene() {
@@ -266,7 +267,7 @@ int main(int argc, const char* argv[]) {
 	initBasicShaderPipeline();
 	initLights();
 	initObjectsScene();
-	bindWindowCallbacks();
+	bindWindowAndKeyboardCallbacks();
 
 	glCheckError();
 

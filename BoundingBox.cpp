@@ -1,22 +1,15 @@
-#include "BoundingBoxes.h"
+#include "BoundingBox.h"
 #include <GL/glew.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
 
 #include "GlobalObjects.h"
 
 namespace globals
 {
-	unsigned int boundingBoxVAO, boundingBoxVBO, boundingBoxEBO;
-
-	// Bounding box edges
-	const unsigned int boxIndices[] = {
-		0, 1, 1, 2, 2, 3, 3, 0,
-		4, 5, 5, 6, 6, 7, 7, 4,
-		0, 4, 1, 5, 2, 6, 3, 7
-	};
-
-	void initializeBoundingBoxGPU() {
+	void BoundingBox3D::initializeBoundingBoxGPU() {
 		glGenVertexArrays(1, &boundingBoxVAO);
 		glGenBuffers(1, &boundingBoxVBO);
 		glGenBuffers(1, &boundingBoxEBO);
@@ -25,7 +18,7 @@ namespace globals
 
 		// Setup VBO for vertices
 		glBindBuffer(GL_ARRAY_BUFFER, boundingBoxVBO);
-		glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW); // Placeholder for vertices
+		glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
 
 		// Setup EBO for indices
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, boundingBoxEBO);
@@ -43,18 +36,39 @@ namespace globals
 		shader.useShaderProgram();
 
 		glm::mat4 modelMatrix = glm::mat4(1.0f);
-		glm::mat4 translation = glm::translate(modelMatrix, (min.Position + max.Position) / 2.0f);
-		glm::mat4 scaling = glm::scale(modelMatrix, max.Position - min.Position);
-
-		modelMatrix = translation * scaling;
+		// glm::mat4 translation = glm::translate(modelMatrix, (min.Position + max.Position) / 2.0f);
+		// glm::mat4 scaling = glm::scale(modelMatrix, max.Position - min.Position);
+		// modelMatrix = translation * scaling;
 
 		glUniformMatrix4fv(globals::getBasicShaderLocations().modelLoc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
-
-		std::cout << "drawing box";
 
 		glBindVertexArray(boundingBoxVAO);
 		glDrawElements(GL_LINES, sizeof(boxIndices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
+	}
+
+	void BoundingBox3D::setBoundingBoxCorners(std::vector<glm::vec3> cube_vertices) {
+		if (cube_vertices.size() != 8) {
+			std::cerr << "Invalid number of corners for bounding box" << std::endl;
+			return;
+		}
+		glm::vec3 vertices[] = {
+			{cube_vertices[0].x, cube_vertices[0].y, cube_vertices[0].z},
+			{cube_vertices[1].x, cube_vertices[1].y, cube_vertices[1].z},
+			{cube_vertices[2].x, cube_vertices[2].y, cube_vertices[2].z},
+			{cube_vertices[3].x, cube_vertices[3].y, cube_vertices[3].z},
+			{cube_vertices[4].x, cube_vertices[4].y, cube_vertices[4].z},
+			{cube_vertices[5].x, cube_vertices[5].y, cube_vertices[5].z},
+			{cube_vertices[6].x, cube_vertices[6].y, cube_vertices[6].z},
+			{cube_vertices[7].x, cube_vertices[7].y, cube_vertices[7].z}
+		};
+
+		// std::cout << "Corners:" << glm::to_string(vertices[0]) << " " << glm::to_string(vertices[3]) << " " <<
+		// 	glm::to_string(vertices[5]) << " " << glm::to_string(vertices[7]) << std::endl;
+
+		glBindBuffer(GL_ARRAY_BUFFER, boundingBoxVBO);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
 	void BoundingBox3D::setBoundingBox(glm::vec3 min, glm::vec3 max) {

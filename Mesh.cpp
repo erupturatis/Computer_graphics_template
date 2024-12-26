@@ -19,6 +19,10 @@ namespace globals
 		return this->vertices;
 	}
 
+	std::vector<GLuint> Mesh::getIndices() {
+		return this->indices;
+	}
+
 	/* Mesh drawing function - also applies associated textures */
 	void Mesh::Draw(globals::Shader shader) {
 		shader.useShaderProgram();

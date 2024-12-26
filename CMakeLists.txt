@@ -11,12 +11,12 @@ add_executable(computer_graphics
         Shader.cpp
         stb_image.cpp
         tiny_obj_loader.cpp
-        BoundingBoxes.cpp
+        BoundingBox.cpp
         pure_functions.cpp
         CameraAnimation.cpp
         Window.cpp
         Mouse.cpp
-        BoundingBoxes.h
+        BoundingBox.h
         GlobalConfigs.cpp
         GlobalObjects.cpp
         Bindings.cpp
