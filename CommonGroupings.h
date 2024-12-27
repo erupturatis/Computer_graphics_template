@@ -18,8 +18,12 @@ namespace globals_structs
 		GLint viewLoc;
 		GLint projectionLoc;
 		GLint normalMatrixLoc;
-		GLint lightDirLoc;
-		GLint lightColorLoc;
+
+		GLint lightDirDir;
+		GLint lightDirColor;
+
+		GLint lightPointLoc;
+		GLint lightPointColor;
 	};
 }
 

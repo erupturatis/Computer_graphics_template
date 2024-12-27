@@ -32,12 +32,11 @@ struct terrainBinding
 };
 
 // light parameters
-glm::vec3 lightDir;
-glm::vec3 lightColor;
+glm::vec3 lightDirDir;
+glm::vec3 lightDirColor;
 
-unsigned int depthMapFBO;
-const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
-unsigned int depthMap;
+glm::vec3 lightPointLoc;
+glm::vec3 lightPointColor;
 
 
 // MODELS
@@ -131,25 +130,21 @@ void processCameraMovement() {
 	if (globals::isKeyPressed(GLFW_KEY_W) && checkCollision(globals::MOVE_FORWARD) == false) {
 		myCamera.move(globals::MOVE_FORWARD, cameraSpeed);
 		setMatrixViewBasicShader();
-		scene::recalculateNormals();
 	}
 
 	if (globals::isKeyPressed(GLFW_KEY_S) && checkCollision(globals::MOVE_BACKWARD) == false) {
 		myCamera.move(globals::MOVE_BACKWARD, cameraSpeed);
 		setMatrixViewBasicShader();
-		scene::recalculateNormals();
 	}
 
 	if (globals::isKeyPressed(GLFW_KEY_A) && checkCollision(globals::MOVE_LEFT) == false) {
 		myCamera.move(globals::MOVE_LEFT, cameraSpeed);
 		setMatrixViewBasicShader();
-		scene::recalculateNormals();
 	}
 
 	if (globals::isKeyPressed(GLFW_KEY_D) && checkCollision(globals::MOVE_RIGHT) == false) {
 		myCamera.move(globals::MOVE_RIGHT, cameraSpeed);
 		setMatrixViewBasicShader();
-		scene::recalculateNormals();
 	}
 }
 
@@ -196,23 +191,6 @@ void initOpenGLState() {
 	glDisable(GL_CULL_FACE);
 }
 
-void initShadows() {
-	glGenFramebuffers(1, &depthMapFBO);
-	glGenTextures(1, &depthMap);
-	glBindTexture(GL_TEXTURE_2D, depthMap);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-	             SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
 
 int get_terrain_index(int i, int j) {
 	return i * terrain_blocks_count + j;
@@ -286,7 +264,10 @@ void initBasicShaderPipeline() {
 	shaderLocations.modelLoc = glGetUniformLocation(shaderProgram, "model");
 	shaderLocations.normalMatrixLoc = glGetUniformLocation(shaderProgram, "normalMatrix");
 	shaderLocations.projectionLoc = glGetUniformLocation(shaderProgram, "projection");
-	shaderLocations.lightDirLoc = glGetUniformLocation(shaderProgram, "lightDir");
+	shaderLocations.lightDirDir = glGetUniformLocation(shaderProgram, "lightDir");
+	shaderLocations.lightDirColor = glGetUniformLocation(shaderProgram, "lightColor");
+	shaderLocations.lightPointLoc = glGetUniformLocation(shaderProgram, "lightPointLoc");
+	shaderLocations.lightPointColor = glGetUniformLocation(shaderProgram, "lightPointColor");
 
 	// Validate uniform locations
 	if (shaderLocations.modelLoc == -1) {
@@ -305,7 +286,7 @@ void initBasicShaderPipeline() {
 		std::cerr << "Invalid uniform location for 'normalMatrix'" << std::endl;
 	}
 
-	if (shaderLocations.lightDirLoc == -1) {
+	if (shaderLocations.lightDirDir == -1) {
 		std::cerr << "Invalid uniform location for 'lightDir'" << std::endl;
 	}
 
@@ -317,11 +298,17 @@ void initLights() {
 	globals::Shader& myBasicShader = globals::getBasicShader();
 	globals_structs::ShaderLocations& shaderLocations = globals::getBasicShaderLocations();
 
-	lightDir = glm::vec3(0.0f, 1.0f, 1.0f);
-	glUniform3fv(shaderLocations.lightDirLoc, 1, glm::value_ptr(lightDir));
-	lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
-	shaderLocations.lightColorLoc = glGetUniformLocation(myBasicShader.shaderProgram, "lightColor");
-	glUniform3fv(shaderLocations.lightColorLoc, 1, glm::value_ptr(lightColor));
+	lightDirDir = glm::vec3(0.0f, 1.0f, 1.0f);
+	lightDirColor = glm::vec3(1.0f, 1.0f, 1.0f);
+
+	lightPointLoc = glm::vec3(12.0f, 1.0f, 15.0f);
+	lightPointColor = glm::vec3(1.0f, 1.0f, 1.0f);
+
+	glUniform3fv(shaderLocations.lightDirDir, 1, glm::value_ptr(lightDirDir));
+	glUniform3fv(shaderLocations.lightDirColor, 1, glm::value_ptr(lightDirColor));
+
+	glUniform3fv(shaderLocations.lightPointLoc, 1, glm::value_ptr(lightPointLoc));
+	glUniform3fv(shaderLocations.lightPointColor, 1, glm::value_ptr(lightPointColor));
 }
 
 void initBook() {
@@ -413,8 +400,6 @@ void initObjectsScene() {
 	initShrooms();
 	initTerrain();
 	initHouse1();
-
-	scene::recalculateNormals();
 }
 
 
@@ -438,6 +423,7 @@ void renderTerrain() {
 				glm::scale(glm::mat4(1.0f), glm::vec3(terrain_block_scale));
 
 			terrain_block.setModelMatrix(terrain_block_model_matrix);
+			terrain_block.recalculateNormal();
 
 			// update matrices for this object
 			glUniformMatrix4fv(shaderLocations.modelLoc, 1, GL_FALSE,
@@ -476,6 +462,7 @@ void renderBook() {
 
 
 	book.setModelMatrix(transformation_base);
+	book.recalculateNormal();
 
 	// update matrices for this object
 	glUniformMatrix4fv(shaderLocations.modelLoc, 1, GL_FALSE, glm::value_ptr(book.getModelMatrix()));
@@ -519,6 +506,7 @@ void renderShrooms() {
 			transformation_base;
 
 		shroom.setModelMatrix(transformation_base);
+		shroom.recalculateNormal();
 
 		// update matrices for this object
 		glUniformMatrix4fv(shaderLocations.modelLoc, 1, GL_FALSE, glm::value_ptr(shroom.getModelMatrix()));
@@ -547,6 +535,7 @@ void renderHouse1() {
 		transformation_base;
 
 	house1.setModelMatrix(transformation_base);
+	house1.recalculateNormal();
 
 	// update matrices for this object
 	glUniformMatrix4fv(shaderLocations.modelLoc, 1, GL_FALSE, glm::value_ptr(house1.getModelMatrix()));
@@ -554,6 +543,10 @@ void renderHouse1() {
 
 	house1.calculateBoundingBoxes();
 	house1.Draw(shader);
+}
+
+void handleLightsDayNightCycle() {
+	// sets the color and direction on directional light
 }
 
 void renderSceneOriginal() {
@@ -569,7 +562,7 @@ void renderSceneOriginal() {
 	else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	scene::recalculateNormals();
+	// scene::recalculateNormals();
 }
 
 
@@ -607,6 +600,8 @@ int main(int argc, const char* argv[]) {
 
 		processCameraMovement();
 		cameraAnimation::updateCameraAnimation(deltaTime);
+		handleLightsDayNightCycle();
+
 		renderSceneOriginal();
 
 		glfwPollEvents();
