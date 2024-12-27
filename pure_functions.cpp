@@ -3,6 +3,10 @@
 
 namespace globals
 {
+    bool hasNaN(const glm::vec3& vec) {
+        return std::isnan(vec.x) || std::isnan(vec.y) || std::isnan(vec.z);
+    }
+
     float getRandomFloat(float min, float max) {
         std::random_device rd; // Seed for randomness
         std::mt19937 gen(rd()); // Mersenne Twister engine

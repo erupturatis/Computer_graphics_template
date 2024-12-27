@@ -13,6 +13,8 @@ namespace globals
 	float getRandomFloat(float min, float max);
 
 	int get_terrain_index(int i, int j, int terrain_blocks_count);
+
+	bool hasNaN(const glm::vec3& vec);
 }
 
 #endif

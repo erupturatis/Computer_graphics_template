@@ -98,8 +98,6 @@ namespace globals
 		globals::Shader& myBasicShader = globals::getBasicShader();
 		myBasicShader.useShaderProgram();
 		GLuint shaderProgram = myBasicShader.shaderProgram;
-
-		globals_structs::MatricesShaderCommon& matrices = globals::getMatrices();
 		globals_structs::ShaderLocationsBasic& shaderLocations = globals::getBasicShaderLocations();
 
 		// Retrieve uniform locations
@@ -111,6 +109,7 @@ namespace globals
 		shaderLocations.lightDirColor = glGetUniformLocation(shaderProgram, "lightColor");
 		shaderLocations.lightPointLoc = glGetUniformLocation(shaderProgram, "lightPointLoc");
 		shaderLocations.lightPointColor = glGetUniformLocation(shaderProgram, "lightPointColor");
+		shaderLocations.lightSpaceMatrix = glGetUniformLocation(shaderProgram, "lightSpaceMatrix");
 
 		// Validate uniform locations
 		if (shaderLocations.modelLoc == -1) {
@@ -132,5 +131,30 @@ namespace globals
 		if (shaderLocations.lightDirDir == -1) {
 			std::cerr << "Invalid uniform location for 'lightDir'" << std::endl;
 		}
+	}
+
+	void initDepthShaderLocations() {
+		globals::Shader& depthShader = globals::getDepthShader();
+		depthShader.useShaderProgram();
+		GLuint shaderProgram = depthShader.shaderProgram;
+		globals_structs::ShaderLocationsDepth& shaderLocations = globals::getDepthShaderLocations();
+
+		// Retrieve uniform locations
+		shaderLocations.lightSpaceMatrix = glGetUniformLocation(shaderProgram, "lightSpaceMatrix");
+		shaderLocations.model = glGetUniformLocation(shaderProgram, "model");
+
+		// Validate uniform locations
+		if (shaderLocations.lightSpaceMatrix == -1) {
+			std::cerr << "Invalid uniform location for 'lightSpaceMatrix'" << std::endl;
+		}
+
+		if (shaderLocations.model == -1) {
+			std::cerr << "Invalid uniform location for 'model'" << std::endl;
+		}
+	}
+
+	void initShadersLocations() {
+		initBasicShaderLocations();
+		initDepthShaderLocations();
 	}
 }

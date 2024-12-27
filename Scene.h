@@ -31,6 +31,8 @@ namespace scene
 	void renderShrooms(bool depth = false);
 	void renderBook(bool depth = false);
 	void renderHouse1(bool depth = false);
+
+	glm::mat4 calculateLightSpaceMatrix();
 }
 
 #endif //SCENE_H

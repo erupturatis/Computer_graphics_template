@@ -2,10 +2,10 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp> //core glm functionality
-#include <glm/gtc/matrix_transform.hpp> //glm extension for generating common transformation matrices
-#include <glm/gtc/matrix_inverse.hpp> //glm extension for computing inverse matrices
-#include <glm/gtc/type_ptr.hpp> //glm extension for accessing the internal data structure of glm types
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 
 #include "tiny_obj_loader.h"
@@ -34,10 +34,8 @@
 unsigned int depthMapFBO;
 unsigned int depthMap;
 
-globals::Shader depthShader;
-globals_structs::ShaderLocationsDepth depthShaderLocations;
-
 globals::Shader depthMapViewShader;
+globals::Shader fragPosLightSpaceShader;
 
 void loadModels() {
 	scene::loadBook();
@@ -52,10 +50,13 @@ void loadShaders() {
 		"shaders/basic.vert",
 		"shaders/basic.frag");
 
+	globals::Shader& depthShader = globals::getDepthShader();
 	depthShader.loadShader(
 		"shaders/simpleDepth.vert",
 		"shaders/simpleDepth.frag");
+
 	depthMapViewShader.loadShader("shaders/depthMapView.vert", "shaders/depthMapView.frag");
+	fragPosLightSpaceShader.loadShader("shaders/fragPosLightSpaceView.vert", "shaders/fragPosLightSpaceView.frag");
 }
 
 void initBasicShaderMatrices() {
@@ -63,37 +64,18 @@ void initBasicShaderMatrices() {
 	setMatrixProjectionBasicShader();
 }
 
-void initSimpleDepthShader() {
+void initLightSpaceMatrices() {
+	glm::mat4 lightSpaceMatrix = scene::calculateLightSpaceMatrix();
+
+	globals::Shader& depthShader = globals::getDepthShader();
+	globals_structs::ShaderLocationsDepth& depthShaderLocations = globals::getDepthShaderLocations();
 	depthShader.useShaderProgram();
-	float near_plane = 0.1f, far_plane = 500.0f;
-	glm::mat4 lightProjection = glm::ortho(-500.0f, 500.0f,
-	                                       -500.0f, 500.0f,
-	                                       near_plane, far_plane);
+	glUniformMatrix4fv(depthShaderLocations.lightSpaceMatrix, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 
-	glm::vec3 normalizedLightDir = glm::normalize(globals::getLightDirDir());
-	glm::vec3 lightPosition = -normalizedLightDir * 100.0f;
-
-	glm::mat4 lightView = glm::lookAt(
-		lightPosition, // Light position
-		glm::vec3(0.0f, 0.0f, 0.0f), // Look at origin
-		glm::vec3(0.0f, 1.0f, 0.0f) // Up vector
-	);
-
-	glm::mat4 lightSpaceMatrix = lightProjection * lightView;
-
-	GLint lightSpaceMatrixLocation = glGetUniformLocation(depthShader.shaderProgram, "lightSpaceMatrix");
-	GLint modelLocation = glGetUniformLocation(depthShader.shaderProgram, "model");
-
-	depthShaderLocations.lightSpaceMatrix = lightSpaceMatrixLocation;
-	depthShaderLocations.model = modelLocation;
-
-	glUniformMatrix4fv(lightSpaceMatrixLocation, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
-
-	// Store lightSpaceMatrix for basicShader
 	globals::Shader& basicShader = globals::getBasicShader();
+	globals_structs::ShaderLocationsBasic& basicShaderLocations = globals::getBasicShaderLocations();
 	basicShader.useShaderProgram();
-	GLint lightSpaceMatrixBasicLoc = glGetUniformLocation(basicShader.shaderProgram, "lightSpaceMatrix");
-	glUniformMatrix4fv(lightSpaceMatrixBasicLoc, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+	glUniformMatrix4fv(basicShaderLocations.lightSpaceMatrix, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 }
 
 void initShadows() {
@@ -112,6 +94,11 @@ void initShadows() {
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
 	glDrawBuffer(GL_NONE);
 	glReadBuffer(GL_NONE);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		std::cerr << "Error: Depth framebuffer is not complete!" << std::endl;
+	}
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -125,16 +112,16 @@ void initObjectsScene() {
 
 
 void renderSceneDepth() {
+	scene::renderTerrain(true);
 	scene::renderHouse1(true);
 	scene::renderBook(true);
-	scene::renderTerrain(true);
 	scene::renderShrooms(true);
 }
 
 void renderSceneNormal() {
+	scene::renderTerrain(false);
 	scene::renderHouse1(false);
 	scene::renderBook(false);
-	scene::renderTerrain(false);
 	scene::renderShrooms(false);
 
 	if (globals_configs::getWireframeMode())
@@ -148,7 +135,7 @@ void renderSceneWithShadows() {
 	glViewport(0, 0, globals::getShadowWidth(), globals::getShadowHeight());
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glClear(GL_DEPTH_BUFFER_BIT);
-	initSimpleDepthShader();
+	initLightSpaceMatrices();
 	renderSceneDepth();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -156,6 +143,7 @@ void renderSceneWithShadows() {
 	glViewport(0, 0, globals::getWindowWidth(), globals::getWindowHeight());
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	initBasicShaderMatrices();
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 	glUniform1i(glGetUniformLocation(globals::getBasicShader().shaderProgram, "shadowMap"), 0);
@@ -164,10 +152,100 @@ void renderSceneWithShadows() {
 }
 
 
+unsigned int quadVAO = 0, quadVBO = 0;
+
+void renderQuad() {
+	glViewport(0, 0, globals::getWindowWidth(), globals::getWindowHeight());
+	if (quadVAO == 0) {
+		float quadVertices[] = {
+			// positions        // texture coords
+			-1.0f, 1.0f, 0.0f, 1.0f,
+			-1.0f, -1.0f, 0.0f, 0.0f,
+			1.0f, -1.0f, 1.0f, 0.0f,
+
+			-1.0f, 1.0f, 0.0f, 1.0f,
+			1.0f, -1.0f, 1.0f, 0.0f,
+			1.0f, 1.0f, 1.0f, 1.0f
+		};
+
+		glGenVertexArrays(1, &quadVAO);
+		glGenBuffers(1, &quadVBO);
+		glBindVertexArray(quadVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
+		// Position attribute
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+
+		// Texture coordinate attribute
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+
+		glBindVertexArray(0);
+	}
+
+	glBindVertexArray(quadVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+}
+
+
+void renderDepthMap() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	depthMapViewShader.useShaderProgram();
+
+	GLint depthMapLocation = glGetUniformLocation(depthMapViewShader.shaderProgram, "depthMap");
+	glUniform1i(depthMapLocation, 0); // Texture unit 0
+
+	// Bind the depth map texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+
+	renderQuad();
+}
+
+
 void cleanup() {
 	globals::getWindow().Delete();
 	//cleanup code for your own data
 }
+
+int countNonWhiteDepthValues(unsigned int depthMap, int width, int height, float epsilon = 1e-5f) {
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	std::vector<float> depthData(width * height);
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GL_FLOAT, depthData.data());
+	GLenum err;
+	while ((err = glGetError()) != GL_NO_ERROR) {
+		std::cerr << "OpenGL Error while reading depth map: " << err << std::endl;
+		return -1;
+	}
+
+	int count = 0;
+	for (const float& depth : depthData) {
+		if (depth < (1.0f - epsilon)) {
+			count++;
+		}
+	}
+	return count;
+}
+
+void renderFragPosLightSpace() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Use the visualization shader
+	fragPosLightSpaceShader.useShaderProgram();
+
+	// Bind the FragPosLightSpace map (a framebuffer texture from your scene rendering)
+	GLint fragPosLightSpaceLocation = glGetUniformLocation(fragPosLightSpaceShader.shaderProgram,
+	                                                       "fragPosLightSpaceMap");
+	glUniform1i(fragPosLightSpaceLocation, 0); // Texture unit 0
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, depthMap); // Replace `depthMap` with your actual FragPosLightSpace texture
+
+	renderQuad(); // Render to a full-screen quad
+}
+
 
 int main(int argc, const char* argv[]) {
 	try {
@@ -181,7 +259,7 @@ int main(int argc, const char* argv[]) {
 	initOpenGLState();
 	loadModels();
 	loadShaders();
-	globals::initBasicShaderLocations();
+	globals::initShadersLocations();
 	initBasicShaderMatrices();
 	lights::initLights();
 	initShadows();
@@ -199,11 +277,12 @@ int main(int argc, const char* argv[]) {
 		lastFrameTime = currentFrameTime;
 
 		globals::processCameraMovement();
-		cameraAnimation::updateCameraAnimation(deltaTime);
-		day_night_cycle::handleLightsDayNightCycle();
+		// cameraAnimation::updateCameraAnimation(deltaTime);
+		// day_night_cycle::handleLightsDayNightCycle();
 
-		// renderSceneNormal();
 		renderSceneWithShadows();
+		// renderDepthMap();
+		// renderFragPosLightSpace();
 
 		glfwPollEvents();
 		glfwSwapBuffers(myWindow.getWindow());
@@ -216,55 +295,3 @@ int main(int argc, const char* argv[]) {
 
 	return EXIT_SUCCESS;
 }
-
-//
-// unsigned int quadVAO = 0, quadVBO = 0;
-//
-// void renderQuad() {
-// 	if (quadVAO == 0) {
-// 		std::cout << "renderQuad" << std::endl;
-// 		float quadVertices[] = {
-// 			-1.0f, 1.0f, 0.0f, 1.0f,
-// 			-1.0f, -1.0f, 0.0f, 0.0f,
-// 			1.0f, -1.0f, 1.0f, 0.0f,
-//
-// 			-1.0f, 1.0f, 0.0f, 1.0f,
-// 			1.0f, -1.0f, 1.0f, 0.0f,
-// 			1.0f, 1.0f, 1.0f, 1.0f
-// 		};
-//
-// 		glGenVertexArrays(1, &quadVAO);
-// 		glGenBuffers(1, &quadVBO);
-// 		glBindVertexArray(quadVAO);
-//
-// 		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-// 		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
-//
-// 		glEnableVertexAttribArray(0);
-// 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-// 		glEnableVertexAttribArray(1);
-// 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-// 	}
-//
-// 	glBindVertexArray(quadVAO);
-// 	glDrawArrays(GL_TRIANGLES, 0, 6);
-// 	glBindVertexArray(0);
-// }
-//
-//
-// void renderDepthMap() {
-// 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-// 	depthMapViewShader.useShaderProgram();
-//
-// 	// Set the uniform for the depth map texture
-// 	GLint depthMapLocation = glGetUniformLocation(depthMapViewShader.shaderProgram, "depthMap");
-// 	glUniform1i(depthMapLocation, 0); // Texture unit 0
-//
-// 	// Bind the depth map texture
-// 	glActiveTexture(GL_TEXTURE0);
-// 	glBindTexture(GL_TEXTURE_2D, depthMap);
-//
-// 	// Render the quad
-// 	renderQuad();
-// }
-//

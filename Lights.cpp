@@ -4,21 +4,20 @@
 
 namespace lights
 {
-	glm::vec3 lightDirDir;
-	glm::vec3 lightDirColor;
-
-	glm::vec3 lightPointLoc;
-	glm::vec3 lightPointColor;
-
 	void initLights() {
 		globals::Shader& myBasicShader = globals::getBasicShader();
 		globals_structs::ShaderLocationsBasic& shaderLocations = globals::getBasicShaderLocations();
 
-		lightDirDir = glm::vec3(0.0f, 1.0f, 1.0f);
-		lightDirColor = glm::vec3(1.0f, 1.0f, 1.0f);
+		glm::vec3 lightDirDir = glm::vec3(0.0f, 1.0f, 1.0f);
+		glm::vec3 lightDirColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
-		lightPointLoc = glm::vec3(10.0f, 1.0f, 16.0f);
-		lightPointColor = glm::vec3(1.0f, 1.0f, 1.0f);
+		glm::vec3 lightPointLoc = glm::vec3(10.0f, 1.0f, 16.0f);
+		glm::vec3 lightPointColor = glm::vec3(1.0f, 1.0f, 1.0f);
+
+		globals::setLightPointLoc(lightPointLoc);
+		globals::setLightPointColor(lightPointColor);
+		globals::setLightDirColor(lightDirColor);
+		globals::setLightDirDir(lightDirDir);
 
 		glUniform3fv(shaderLocations.lightDirDir, 1, glm::value_ptr(lightDirDir));
 		glUniform3fv(shaderLocations.lightDirColor, 1, glm::value_ptr(lightDirColor));

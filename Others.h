@@ -13,3 +13,4 @@ GLenum glCheckError_(const char* file, int line);
 void initOpenGLState();
 
 #endif //OTHERS_H
+

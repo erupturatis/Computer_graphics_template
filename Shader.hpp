@@ -30,7 +30,7 @@ namespace globals
         void shaderLinkLog(GLuint shaderProgramId);
     };
 
-    void initBasicShaderLocations();
+    void initShadersLocations();
 }
 
 #endif /* Shader_hpp */

@@ -37,6 +37,8 @@ namespace globals_structs
 
 		GLint lightPointLoc;
 		GLint lightPointColor;
+
+		GLint lightSpaceMatrix;
 	};
 }
 

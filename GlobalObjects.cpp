@@ -1,5 +1,6 @@
 #include "GlobalObjects.h"
 #include "CommonGroupings.h"
+#include "pure_functions.h"
 
 namespace globals
 {

@@ -33,7 +33,7 @@ namespace scene
 	std::vector<float> shrooms_random_scales;
 	float shroom_default_y = 0.65f;
 	float shroom_scale = 1.0f;
-	int shrooms_count = 30;
+	int shrooms_count = 20;
 	int shrooms_types_start = 1;
 	int shrooms_types_end = 3;
 
@@ -254,10 +254,12 @@ namespace scene
 			*
 			transformation_base;
 
-		glm::vec3 finalBookPosition = glm::vec3(transformation_base[3]);
-		finalBookPosition.y = 1.0f;
-		globals::setLightPointLoc(finalBookPosition);
-		glUniform3fv(shaderLocations.lightPointLoc, 1, glm::value_ptr(globals::getLightPointLoc()));
+		if (depth == false) {
+			glm::vec3 finalBookPosition = glm::vec3(transformation_base[3]);
+			finalBookPosition.y = 1.0f;
+			globals::setLightPointLoc(finalBookPosition);
+			glUniform3fv(shaderLocations.lightPointLoc, 1, glm::value_ptr(globals::getLightPointLoc()));
+		}
 
 		book.setModelMatrix(transformation_base);
 		book.recalculateNormal();
@@ -296,17 +298,15 @@ namespace scene
 			glm::vec3& noise = shrooms_random_noise[i];
 			glm::vec3& rotation = shrooms_random_rotations[i];
 
-			float terrain_block_y = 0.0f;
 
 			float terrain_binding_z = terrain_binding_shroom.i * terrain_block_distance_z_axis_i_coord;
 			float terrain_binding_x = terrain_binding_shroom.j * terrain_block_distance_x_axis_j_coord;
 
-			float terrain_block_z = terrain_binding_z + noise.z;
 			float terrain_block_x = terrain_binding_x + noise.x;
+			float terrain_block_y = shroom_default_y * shrooms_random_scales[i];
+			float terrain_block_z = terrain_binding_z + noise.z;
 
 			float scale = shrooms_random_scales[i];
-
-			// whatever transformations we want to apply to the teapot
 			glm::mat4 transformation_base = glm::scale(glm::mat4(1.0f), glm::vec3(scale));
 			transformation_base = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.x), glm::vec3(1.0f, 0, 0)) *
 				transformation_base;
@@ -315,7 +315,7 @@ namespace scene
 			transformation_base = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.z), glm::vec3(0, 0, 1.0f)) *
 				transformation_base;
 			transformation_base = glm::translate(glm::mat4(1.0f),
-			                                     glm::vec3(terrain_block_x, shroom_default_y * scale,
+			                                     glm::vec3(terrain_block_x, terrain_block_y,
 			                                               terrain_block_z)) *
 				transformation_base;
 
@@ -335,6 +335,31 @@ namespace scene
 				shroom.DrawDepth(depthShader);
 			}
 		}
+	}
+
+	glm::mat4 calculateLightSpaceMatrix() {
+		float near_plane = 0.1f, far_plane = 40.0f;
+		float frustum_scale = 20.0f;
+		float light_distance = 10.0f;
+		glm::mat4 lightProjection = glm::ortho(-frustum_scale, frustum_scale,
+		                                       -frustum_scale, frustum_scale,
+		                                       near_plane, far_plane);
+
+		glm::vec3 normalizedLightDir = glm::normalize(globals::getLightDirDir());
+		glm::vec3 offsetXaxis = glm::vec3(terrain_block_distance_x_axis_j_coord * terrain_blocks_count * 0.5f, 0.0f,
+		                                  0.0f);
+		glm::vec3 offsetZaxis = glm::vec3(
+			0.0f, 0.0f, terrain_block_distance_z_axis_i_coord * terrain_blocks_count * 0.5f);
+		glm::vec3 lightPosition = normalizedLightDir * light_distance + offsetXaxis + offsetZaxis;
+
+		glm::mat4 lightView = glm::lookAt(
+			lightPosition, // Light position
+			glm::vec3(0.0f, 0.0f, 0.0f) + offsetXaxis + offsetZaxis, // Look at origin
+			glm::vec3(0.0f, 0.0f, -1.0f) // Up vector
+		);
+
+		glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+		return lightSpaceMatrix;
 	}
 
 	void renderHouse1(bool depth) {
@@ -374,6 +399,9 @@ namespace scene
 		}
 		else {
 			glUniformMatrix4fv(depthShaderLocations.model, 1, GL_FALSE, glm::value_ptr(house1.getModelMatrix()));
+			// glUniformMatrix4fv(depthShaderLocations.lightSpaceMatrix, 1, GL_FALSE,
+			//                    glm::value_ptr(calculateLightSpaceMatrix()));
+
 			house1.DrawDepth(depthShader);
 		}
 	}
