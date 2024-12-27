@@ -62,6 +62,8 @@ namespace globals
 
         std::vector<GLuint> getIndices();
 
+        void DrawDepth(globals::Shader depthShader);
+
     private:
         /*  Render data  */
         Buffers buffers;

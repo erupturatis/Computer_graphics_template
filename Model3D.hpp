@@ -43,7 +43,10 @@ namespace globals
 
 		void calculateBoundingBoxes();
 
-	private:
+		void DrawDepth(globals::Shader shaderProgram);
+
+	private
+	:
 		std::vector<globals::Mesh> meshes;
 		std::vector<BoundingBox3D> bounding_boxes;
 

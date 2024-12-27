@@ -6,6 +6,7 @@ namespace globals_configs
     bool showBoundingBoxes = true;
     GLfloat cameraSpeed = 0.1f;
     bool wireframeMode = false;
+    bool acceleratedDayNightCycle = false;
 
     bool getWireframeMode() {
         return globals_configs::wireframeMode;
@@ -13,6 +14,14 @@ namespace globals_configs
 
     void setWireframeMode(bool wireframe) {
         globals_configs::wireframeMode = wireframe;
+    }
+
+    bool getAcceleratedDayNightCycle() {
+        return globals_configs::acceleratedDayNightCycle;
+    }
+
+    void setAcceleratedDayNightCycle(bool accelerated) {
+        globals_configs::acceleratedDayNightCycle = accelerated;
     }
 
     bool getShowBoundingBoxes() {

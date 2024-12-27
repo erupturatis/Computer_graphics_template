@@ -13,6 +13,9 @@ namespace globals_configs
 
     bool getWireframeMode();
     void setWireframeMode(bool wireframe);
+
+    bool getAcceleratedDayNightCycle();
+    void setAcceleratedDayNightCycle(bool accelerated);
 }
 
 #endif // GLOBAL_CONFIGS_H

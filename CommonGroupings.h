@@ -11,7 +11,20 @@ namespace globals_structs
 		glm::mat4 projection;
 	};
 
-	struct ShaderLocations
+	struct ShaderLocationsDepth
+	{
+		GLint lightSpaceMatrix;
+		GLint model;
+	};
+
+	struct terrainBinding
+	{
+		int i;
+		int j;
+	};
+
+
+	struct ShaderLocationsBasic
 	{
 		GLint modelLoc;
 

@@ -21,227 +21,29 @@
 #include "CommonGroupings.h"
 #include "pure_functions.h"
 #include "GlobalObjects.h"
+#include "CommonGroupings.h"
 #include "Mouse.h"
 #include "Scene.h"
 #include <random>
+#include "Collisions.h"
+#include "DayNightCycle.h"
+#include "Lights.h"
+#include "Others.h"
 
-struct terrainBinding
-{
-	int i;
-	int j;
-};
+// SHADOWS
+unsigned int depthMapFBO;
+unsigned int depthMap;
 
-// light parameters
-glm::vec3 lightDirDir;
-glm::vec3 lightDirColor;
+globals::Shader depthShader;
+globals_structs::ShaderLocationsDepth depthShaderLocations;
 
-glm::vec3 lightPointLoc;
-glm::vec3 lightPointColor;
-
-
-// MODELS
-globals::Model3D teapot;
-// terrain
-std::vector<globals::Model3D> terrain_blocks;
-int terrain_blocks_count = 5;
-float terrain_block_distance_x_axis_j_coord = 5.0f;
-float terrain_block_distance_z_axis_i_coord = 5.5f;
-float terrain_block_scale = 0.5f;
-
-// environment
-
-// shrooms
-std::vector<globals::Model3D> shrooms;
-std::vector<terrainBinding> shrooms_bindings;
-std::vector<glm::vec3> shrooms_random_noise;
-std::vector<glm::vec3> shrooms_random_rotations;
-std::vector<float> shrooms_random_scales;
-float shroom_default_y = 0.65f;
-float shroom_scale = 1.0f;
-int shrooms_count = 30;
-int shrooms_types_start = 1;
-int shrooms_types_end = 3;
-
-// house
-globals::Model3D house1;
-float house1_scale = 0.1f;
-float house1_default_y = 0.5f;
-terrainBinding terrain_binding_house1;
-
-// others
-globals::Model3D book;
-float book_scale = 10.0f;
-float book_default_y = 7.0f;
-float book_float_variation = 3.0f;
-terrainBinding terrain_binding_book;
-
-GLenum glCheckError_(const char* file, int line) {
-	GLenum errorCode;
-	while ((errorCode = glGetError()) != GL_NO_ERROR) {
-		std::string error;
-		switch (errorCode) {
-		case GL_INVALID_ENUM:
-			error = "INVALID_ENUM";
-			break;
-		case GL_INVALID_VALUE:
-			error = "INVALID_VALUE";
-			break;
-		case GL_INVALID_OPERATION:
-			error = "INVALID_OPERATION";
-			break;
-		case GL_OUT_OF_MEMORY:
-			error = "OUT_OF_MEMORY";
-			break;
-		case GL_INVALID_FRAMEBUFFER_OPERATION:
-			error = "INVALID_FRAMEBUFFER_OPERATION";
-			break;
-		}
-		std::cout << error << " | " << file << " (" << line << ")" << std::endl;
-	}
-	return errorCode;
-}
-
-#define glCheckError() glCheckError_(__FILE__, __LINE__)
-
-bool checkCollision(globals::MOVE_DIRECTION direction) {
-	std::vector<globals::Model3D*>& models = scene::getModels3D();
-
-	globals::Camera& myCamera = globals::getCamera();
-
-	glm::vec3 expectedNextPosition = myCamera.getNextPosition(direction, globals_configs::getCameraSpeed());
-
-	for (globals::Model3D* model : models) {
-		std::vector<globals::BoundingBox3D>& boundingBoxes = model->getBoundingBoxes();
-
-		for (globals::BoundingBox3D& boundingBox : boundingBoxes) {
-			if (boundingBox.checkCollision(expectedNextPosition)) {
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-
-void processCameraMovement() {
-	globals::Camera& myCamera = globals::getCamera();
-	float cameraSpeed = globals_configs::getCameraSpeed();
-
-	if (globals::isKeyPressed(GLFW_KEY_W) && checkCollision(globals::MOVE_FORWARD) == false) {
-		myCamera.move(globals::MOVE_FORWARD, cameraSpeed);
-		setMatrixViewBasicShader();
-	}
-
-	if (globals::isKeyPressed(GLFW_KEY_S) && checkCollision(globals::MOVE_BACKWARD) == false) {
-		myCamera.move(globals::MOVE_BACKWARD, cameraSpeed);
-		setMatrixViewBasicShader();
-	}
-
-	if (globals::isKeyPressed(GLFW_KEY_A) && checkCollision(globals::MOVE_LEFT) == false) {
-		myCamera.move(globals::MOVE_LEFT, cameraSpeed);
-		setMatrixViewBasicShader();
-	}
-
-	if (globals::isKeyPressed(GLFW_KEY_D) && checkCollision(globals::MOVE_RIGHT) == false) {
-		myCamera.move(globals::MOVE_RIGHT, cameraSpeed);
-		setMatrixViewBasicShader();
-	}
-}
-
-void initGlobalObjects() {
-	// window
-	globals::Window window = globals::Window();
-	window.Create(1024, 768, "OpenGL Project");
-	globals::setWindow(window);
-
-	// camera
-	globals::Camera camera = globals::Camera();
-	camera.initializeCamera(
-		glm::vec3(0.0f, 5.0f, 3.0f),
-		glm::vec3(0.0f, 0.0f, -10.0f),
-		glm::vec3(0.0f, 1.0f, 0.0f));
-	globals::setCamera(camera);
-
-
-	// common matrices for shader (projection and view)
-	globals_structs::MatricesShaderCommon matrices = globals_structs::MatricesShaderCommon();
-	globals::setMatrices(matrices);
-
-	// locations for shader GPU matrices
-	globals_structs::ShaderLocations shaderLocations = globals_structs::ShaderLocations();
-	globals::setBasicShaderLocations(shaderLocations);
-
-	// shader
-	globals::Shader myBasicShader = globals::Shader();
-	globals::setBasicShader(myBasicShader);
-}
-
-void initOpenGLState() {
-	globals::Window& myWindow = globals::getWindow();
-	glClearColor(0.53f, 0.81f, 0.92f, 1.0f);
-	glViewport(0, 0, myWindow.getWindowDimensions().width, myWindow.getWindowDimensions().height);
-
-	glEnable(GL_FRAMEBUFFER_SRGB);
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-	glFrontFace(GL_CCW);
-
-	glDisable(GL_CULL_FACE);
-}
-
-
-int get_terrain_index(int i, int j) {
-	return i * terrain_blocks_count + j;
-}
-
-void loadBook() {
-	book.LoadModel("models/book/book.obj");
-	scene::registerModel(book);
-}
-
-void loadTerrain() {
-	for (int i = 0; i < terrain_blocks_count; i++) {
-		for (int j = 0; j < terrain_blocks_count; j++) {
-			globals::Model3D terrain_block = globals::Model3D();
-			terrain_blocks.push_back(terrain_block);
-		}
-	}
-
-	for (int i = 0; i < terrain_blocks_count; i++) {
-		for (int j = 0; j < terrain_blocks_count; j++) {
-			int index = get_terrain_index(i, j);
-			globals::Model3D& terrain_block = terrain_blocks[index];
-			terrain_block.LoadModel("models/terrain/terrain.obj");
-			scene::registerModel(terrain_block);
-		}
-	}
-}
-
-void loadShrooms() {
-	for (int i = 0; i < shrooms_count; i++) {
-		globals::Model3D shroom = globals::Model3D();
-		shrooms.push_back(shroom);
-	}
-	for (int i = 0; i < shrooms_count; i++) {
-		globals::Model3D& shroom = shrooms[i];
-		int random_shroom_type = shrooms_types_start + rand() % (shrooms_types_end - shrooms_types_start + 1);
-		shroom.LoadModel("models/environment/shroom" + std::to_string(random_shroom_type) + ".obj");
-		scene::registerModel(shroom);
-	}
-}
-
-void loadHouse1() {
-	house1.LoadModel("models/environment/house1.obj");
-	scene::registerModel(house1);
-}
+globals::Shader depthMapViewShader;
 
 void loadModels() {
-	loadBook();
-	loadTerrain();
-	loadShrooms();
-	loadHouse1();
+	scene::loadBook();
+	scene::loadTerrain();
+	scene::loadShrooms();
+	scene::loadHouse1();
 }
 
 void loadShaders() {
@@ -249,320 +51,116 @@ void loadShaders() {
 	myBasicShader.loadShader(
 		"shaders/basic.vert",
 		"shaders/basic.frag");
+
+	depthShader.loadShader(
+		"shaders/simpleDepth.vert",
+		"shaders/simpleDepth.frag");
+	depthMapViewShader.loadShader("shaders/depthMapView.vert", "shaders/depthMapView.frag");
 }
 
-void initBasicShaderPipeline() {
-	globals::Shader& myBasicShader = globals::getBasicShader();
-	myBasicShader.useShaderProgram();
-	GLuint shaderProgram = myBasicShader.shaderProgram;
-
-	globals_structs::MatricesShaderCommon& matrices = globals::getMatrices();
-	globals_structs::ShaderLocations& shaderLocations = globals::getBasicShaderLocations();
-
-	// Retrieve uniform locations
-	shaderLocations.viewLoc = glGetUniformLocation(shaderProgram, "view");
-	shaderLocations.modelLoc = glGetUniformLocation(shaderProgram, "model");
-	shaderLocations.normalMatrixLoc = glGetUniformLocation(shaderProgram, "normalMatrix");
-	shaderLocations.projectionLoc = glGetUniformLocation(shaderProgram, "projection");
-	shaderLocations.lightDirDir = glGetUniformLocation(shaderProgram, "lightDir");
-	shaderLocations.lightDirColor = glGetUniformLocation(shaderProgram, "lightColor");
-	shaderLocations.lightPointLoc = glGetUniformLocation(shaderProgram, "lightPointLoc");
-	shaderLocations.lightPointColor = glGetUniformLocation(shaderProgram, "lightPointColor");
-
-	// Validate uniform locations
-	if (shaderLocations.modelLoc == -1) {
-		std::cerr << "Invalid uniform location for 'model'" << std::endl;
-	}
-
-	if (shaderLocations.viewLoc == -1) {
-		std::cerr << "Invalid uniform location for 'view'" << std::endl;
-	}
-
-	if (shaderLocations.projectionLoc == -1) {
-		std::cerr << "Invalid uniform location for 'projection'" << std::endl;
-	}
-
-	if (shaderLocations.normalMatrixLoc == -1) {
-		std::cerr << "Invalid uniform location for 'normalMatrix'" << std::endl;
-	}
-
-	if (shaderLocations.lightDirDir == -1) {
-		std::cerr << "Invalid uniform location for 'lightDir'" << std::endl;
-	}
-
+void initBasicShaderMatrices() {
 	setMatrixViewBasicShader();
 	setMatrixProjectionBasicShader();
 }
 
-void initLights() {
-	globals::Shader& myBasicShader = globals::getBasicShader();
-	globals_structs::ShaderLocations& shaderLocations = globals::getBasicShaderLocations();
+void initSimpleDepthShader() {
+	depthShader.useShaderProgram();
+	float near_plane = 0.1f, far_plane = 500.0f;
+	glm::mat4 lightProjection = glm::ortho(-500.0f, 500.0f,
+	                                       -500.0f, 500.0f,
+	                                       near_plane, far_plane);
 
-	lightDirDir = glm::vec3(0.0f, 1.0f, 1.0f);
-	lightDirColor = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::vec3 normalizedLightDir = glm::normalize(globals::getLightDirDir());
+	glm::vec3 lightPosition = -normalizedLightDir * 100.0f;
 
-	lightPointLoc = glm::vec3(12.0f, 1.0f, 15.0f);
-	lightPointColor = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::mat4 lightView = glm::lookAt(
+		lightPosition, // Light position
+		glm::vec3(0.0f, 0.0f, 0.0f), // Look at origin
+		glm::vec3(0.0f, 1.0f, 0.0f) // Up vector
+	);
 
-	glUniform3fv(shaderLocations.lightDirDir, 1, glm::value_ptr(lightDirDir));
-	glUniform3fv(shaderLocations.lightDirColor, 1, glm::value_ptr(lightDirColor));
+	glm::mat4 lightSpaceMatrix = lightProjection * lightView;
 
-	glUniform3fv(shaderLocations.lightPointLoc, 1, glm::value_ptr(lightPointLoc));
-	glUniform3fv(shaderLocations.lightPointColor, 1, glm::value_ptr(lightPointColor));
+	GLint lightSpaceMatrixLocation = glGetUniformLocation(depthShader.shaderProgram, "lightSpaceMatrix");
+	GLint modelLocation = glGetUniformLocation(depthShader.shaderProgram, "model");
+
+	depthShaderLocations.lightSpaceMatrix = lightSpaceMatrixLocation;
+	depthShaderLocations.model = modelLocation;
+
+	glUniformMatrix4fv(lightSpaceMatrixLocation, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+
+	// Store lightSpaceMatrix for basicShader
+	globals::Shader& basicShader = globals::getBasicShader();
+	basicShader.useShaderProgram();
+	GLint lightSpaceMatrixBasicLoc = glGetUniformLocation(basicShader.shaderProgram, "lightSpaceMatrix");
+	glUniformMatrix4fv(lightSpaceMatrixBasicLoc, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 }
 
-void initBook() {
-	glm::mat4 book_model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, book_default_y, 0.0f));
-	book.setModelMatrix(book_model_matrix);
-	book.initializeBoundingBoxes();
-	book.bindBoundingBoxesGPU();
-	book.calculateBoundingBoxes();
-	terrain_binding_book.i = 2;
-	terrain_binding_book.j = 2;
+void initShadows() {
+	glGenFramebuffers(1, &depthMapFBO);
+
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+	             globals::getShadowWidth(), globals::getShadowHeight(), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void initTerrain() {
-	for (int i = 0; i < terrain_blocks_count; i++) {
-		for (int j = 0; j < terrain_blocks_count; j++) {
-			int index = get_terrain_index(i, j);
-			globals::Model3D& terrain_block = terrain_blocks[index];
-
-			float terrain_block_y = 0.0f;
-			float terrain_block_z = i * terrain_block_distance_z_axis_i_coord;
-			float terrain_block_x = j * terrain_block_distance_x_axis_j_coord;
-
-			glm::mat4 terrain_block_model_matrix = glm::translate(glm::mat4(1.0f),
-			                                                      glm::vec3(terrain_block_x, terrain_block_y,
-			                                                                terrain_block_z)) *
-
-				glm::scale(glm::mat4(1.0f), glm::vec3(terrain_block_scale));
-
-			terrain_block.setModelMatrix(terrain_block_model_matrix);
-			terrain_block.initializeBoundingBoxes();
-			terrain_block.bindBoundingBoxesGPU();
-			terrain_block.calculateBoundingBoxes();
-		}
-	}
-}
-
-float getRandomFloat(float min, float max) {
-	std::random_device rd; // Seed for randomness
-	std::mt19937 gen(rd()); // Mersenne Twister engine
-	std::uniform_real_distribution<float> dist(min, max);
-	return dist(gen);
-}
-
-void initShrooms() {
-	for (int i = 0; i < shrooms_count; i++) {
-		globals::Model3D& shroom = shrooms[i];
-		glm::mat4 shroom_model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
-		shroom.setModelMatrix(shroom_model_matrix);
-		shroom.initializeBoundingBoxes();
-		shroom.bindBoundingBoxesGPU();
-		shroom.calculateBoundingBoxes();
-
-		terrainBinding terrain_binding_shroom;
-		terrain_binding_shroom.i = rand() % terrain_blocks_count;
-		terrain_binding_shroom.j = rand() % terrain_blocks_count;
-		shrooms_bindings.push_back(terrain_binding_shroom);
-
-
-		float z_noise = getRandomFloat(-0.5f * terrain_block_distance_z_axis_i_coord,
-		                               0.5f * terrain_block_distance_z_axis_i_coord);
-		float x_noise = getRandomFloat(-0.5f * terrain_block_distance_x_axis_j_coord,
-		                               0.5f * terrain_block_distance_x_axis_j_coord);
-		glm::vec3 noise = glm::vec3(x_noise, 0.0f, z_noise);
-		shrooms_random_noise.push_back(noise);
-
-		float y_rotation = getRandomFloat(0.0f, 360.0f);
-		float x_rotation = getRandomFloat(0.0f, 7.0f);
-		float z_rotation = getRandomFloat(0.0f, 7.0f);
-		glm::vec3 rotation = glm::vec3(x_rotation, y_rotation, z_rotation);
-		shrooms_random_rotations.push_back(rotation);
-
-		float scale = getRandomFloat(0.75f * shroom_scale, 1.25f * shroom_scale);
-		shrooms_random_scales.push_back(scale);
-	}
-}
-
-void initHouse1() {
-	glm::mat4 house1_model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, house1_default_y, 0.0f));
-	house1.setModelMatrix(house1_model_matrix);
-	house1.initializeBoundingBoxes();
-	house1.bindBoundingBoxesGPU();
-	house1.calculateBoundingBoxes();
-	terrain_binding_house1.i = 3;
-	terrain_binding_house1.j = 2;
-}
 
 void initObjectsScene() {
-	initBook();
-	initShrooms();
-	initTerrain();
-	initHouse1();
+	scene::initBook();
+	scene::initShrooms();
+	scene::initTerrain();
+	scene::initHouse1();
 }
 
 
-void renderTerrain() {
-	globals::Shader& shader = globals::getBasicShader();
-	globals_structs::ShaderLocations& shaderLocations = globals::getBasicShaderLocations();
-	shader.useShaderProgram();
-
-	for (int i = 0; i < terrain_blocks_count; i++) {
-		for (int j = 0; j < terrain_blocks_count; j++) {
-			int index = get_terrain_index(i, j);
-			globals::Model3D& terrain_block = terrain_blocks[index];
-
-			float terrain_block_y = 0.0f;
-			float terrain_block_z = i * terrain_block_distance_z_axis_i_coord;
-			float terrain_block_x = j * terrain_block_distance_x_axis_j_coord;
-
-			glm::mat4 terrain_block_model_matrix = glm::translate(glm::mat4(1.0f),
-			                                                      glm::vec3(terrain_block_x, terrain_block_y,
-			                                                                terrain_block_z)) *
-				glm::scale(glm::mat4(1.0f), glm::vec3(terrain_block_scale));
-
-			terrain_block.setModelMatrix(terrain_block_model_matrix);
-			terrain_block.recalculateNormal();
-
-			// update matrices for this object
-			glUniformMatrix4fv(shaderLocations.modelLoc, 1, GL_FALSE,
-			                   glm::value_ptr(terrain_block.getModelMatrix()));
-			glUniformMatrix3fv(shaderLocations.normalMatrixLoc, 1, GL_FALSE,
-			                   glm::value_ptr(terrain_block.getNormalMatrix()));
-
-			terrain_block.calculateBoundingBoxes();
-			terrain_block.Draw(shader);
-		}
-	}
+void renderSceneDepth() {
+	scene::renderHouse1(true);
+	scene::renderBook(true);
+	scene::renderTerrain(true);
+	scene::renderShrooms(true);
 }
 
-void renderBook() {
-	globals::Shader& shader = globals::getBasicShader();
-	globals_structs::ShaderLocations& shaderLocations = globals::getBasicShaderLocations();
-	shader.useShaderProgram();
-	float time = glfwGetTime();
-
-	// whatever transformations we want to apply to the teapot
-	glm::mat4 transformation_base = glm::scale(glm::mat4(1.0f), glm::vec3(book_scale));
-	transformation_base = glm::rotate(glm::mat4(1.0f), glm::radians(time * 10), glm::vec3(0.0f, 1.0f, 0.0f)) *
-		transformation_base;
-
-	transformation_base = glm::translate(glm::mat4(1.0f),
-	                                     glm::vec3(terrain_block_distance_x_axis_j_coord * terrain_binding_book.j, 0.0f,
-	                                               terrain_block_distance_z_axis_i_coord * terrain_binding_book.i)) *
-		transformation_base;
-
-	transformation_base = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, book_default_y, 0.0f)) *
-		transformation_base;
-
-	transformation_base = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, book_float_variation * sin(time), 0.0f))
-		*
-		transformation_base;
-
-
-	book.setModelMatrix(transformation_base);
-	book.recalculateNormal();
-
-	// update matrices for this object
-	glUniformMatrix4fv(shaderLocations.modelLoc, 1, GL_FALSE, glm::value_ptr(book.getModelMatrix()));
-	glUniformMatrix3fv(shaderLocations.normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(book.getNormalMatrix()));
-
-	book.calculateBoundingBoxes();
-	book.Draw(shader);
-}
-
-void renderShrooms() {
-	globals::Shader& shader = globals::getBasicShader();
-	globals_structs::ShaderLocations& shaderLocations = globals::getBasicShaderLocations();
-	shader.useShaderProgram();
-
-	for (int i = 0; i < shrooms_count; i++) {
-		globals::Model3D& shroom = shrooms[i];
-		terrainBinding& terrain_binding_shroom = shrooms_bindings[i];
-		glm::vec3& noise = shrooms_random_noise[i];
-		glm::vec3& rotation = shrooms_random_rotations[i];
-
-		float terrain_block_y = 0.0f;
-
-		float terrain_binding_z = terrain_binding_shroom.i * terrain_block_distance_z_axis_i_coord;
-		float terrain_binding_x = terrain_binding_shroom.j * terrain_block_distance_x_axis_j_coord;
-
-		float terrain_block_z = terrain_binding_z + noise.z;
-		float terrain_block_x = terrain_binding_x + noise.x;
-
-		float scale = shrooms_random_scales[i];
-
-		// whatever transformations we want to apply to the teapot
-		glm::mat4 transformation_base = glm::scale(glm::mat4(1.0f), glm::vec3(scale));
-		transformation_base = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.x), glm::vec3(1.0f, 0, 0)) *
-			transformation_base;
-		transformation_base = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.y), glm::vec3(0, 1.0f, 0)) *
-			transformation_base;
-		transformation_base = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.z), glm::vec3(0, 0, 1.0f)) *
-			transformation_base;
-		transformation_base = glm::translate(glm::mat4(1.0f),
-		                                     glm::vec3(terrain_block_x, shroom_default_y * scale, terrain_block_z)) *
-			transformation_base;
-
-		shroom.setModelMatrix(transformation_base);
-		shroom.recalculateNormal();
-
-		// update matrices for this object
-		glUniformMatrix4fv(shaderLocations.modelLoc, 1, GL_FALSE, glm::value_ptr(shroom.getModelMatrix()));
-		glUniformMatrix3fv(shaderLocations.normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(shroom.getNormalMatrix()));
-
-		shroom.calculateBoundingBoxes();
-		shroom.Draw(shader);
-	}
-}
-
-void renderHouse1() {
-	globals::Shader& shader = globals::getBasicShader();
-	globals_structs::ShaderLocations& shaderLocations = globals::getBasicShaderLocations();
-	shader.useShaderProgram();
-
-	// whatever transformations we want to apply to the teapot
-	glm::mat4 transformation_base = glm::scale(glm::mat4(1.0f), glm::vec3(house1_scale));
-	transformation_base = glm::rotate(glm::mat4(1.0f), glm::radians(135.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
-		transformation_base;
-	transformation_base = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, house1_default_y, 0.0f)) *
-		transformation_base;
-	transformation_base = glm::translate(glm::mat4(1.0f),
-	                                     glm::vec3(terrain_block_distance_x_axis_j_coord * terrain_binding_house1.j,
-	                                               0.0f,
-	                                               terrain_block_distance_z_axis_i_coord * terrain_binding_house1.i)) *
-		transformation_base;
-
-	house1.setModelMatrix(transformation_base);
-	house1.recalculateNormal();
-
-	// update matrices for this object
-	glUniformMatrix4fv(shaderLocations.modelLoc, 1, GL_FALSE, glm::value_ptr(house1.getModelMatrix()));
-	glUniformMatrix3fv(shaderLocations.normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(house1.getNormalMatrix()));
-
-	house1.calculateBoundingBoxes();
-	house1.Draw(shader);
-}
-
-void handleLightsDayNightCycle() {
-	// sets the color and direction on directional light
-}
-
-void renderSceneOriginal() {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	renderTerrain();
-	renderShrooms();
-	renderBook();
-	renderHouse1();
+void renderSceneNormal() {
+	scene::renderHouse1(false);
+	scene::renderBook(false);
+	scene::renderTerrain(false);
+	scene::renderShrooms(false);
 
 	if (globals_configs::getWireframeMode())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
 
-	// scene::recalculateNormals();
+void renderSceneWithShadows() {
+	// render scene for depth
+	glViewport(0, 0, globals::getShadowWidth(), globals::getShadowHeight());
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glClear(GL_DEPTH_BUFFER_BIT);
+	initSimpleDepthShader();
+	renderSceneDepth();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// render scene normally
+	glViewport(0, 0, globals::getWindowWidth(), globals::getWindowHeight());
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	initBasicShaderMatrices();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glUniform1i(glGetUniformLocation(globals::getBasicShader().shaderProgram, "shadowMap"), 0);
+
+	renderSceneNormal();
 }
 
 
@@ -573,7 +171,7 @@ void cleanup() {
 
 int main(int argc, const char* argv[]) {
 	try {
-		initGlobalObjects();
+		globals::initGlobalObjects();
 	}
 	catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
@@ -583,8 +181,10 @@ int main(int argc, const char* argv[]) {
 	initOpenGLState();
 	loadModels();
 	loadShaders();
-	initBasicShaderPipeline();
-	initLights();
+	globals::initBasicShaderLocations();
+	initBasicShaderMatrices();
+	lights::initLights();
+	initShadows();
 	initObjectsScene();
 	bindWindowAndKeyboardCallbacks();
 
@@ -598,11 +198,12 @@ int main(int argc, const char* argv[]) {
 		float deltaTime = currentFrameTime - lastFrameTime;
 		lastFrameTime = currentFrameTime;
 
-		processCameraMovement();
+		globals::processCameraMovement();
 		cameraAnimation::updateCameraAnimation(deltaTime);
-		handleLightsDayNightCycle();
+		day_night_cycle::handleLightsDayNightCycle();
 
-		renderSceneOriginal();
+		// renderSceneNormal();
+		renderSceneWithShadows();
 
 		glfwPollEvents();
 		glfwSwapBuffers(myWindow.getWindow());
@@ -616,3 +217,54 @@ int main(int argc, const char* argv[]) {
 	return EXIT_SUCCESS;
 }
 
+//
+// unsigned int quadVAO = 0, quadVBO = 0;
+//
+// void renderQuad() {
+// 	if (quadVAO == 0) {
+// 		std::cout << "renderQuad" << std::endl;
+// 		float quadVertices[] = {
+// 			-1.0f, 1.0f, 0.0f, 1.0f,
+// 			-1.0f, -1.0f, 0.0f, 0.0f,
+// 			1.0f, -1.0f, 1.0f, 0.0f,
+//
+// 			-1.0f, 1.0f, 0.0f, 1.0f,
+// 			1.0f, -1.0f, 1.0f, 0.0f,
+// 			1.0f, 1.0f, 1.0f, 1.0f
+// 		};
+//
+// 		glGenVertexArrays(1, &quadVAO);
+// 		glGenBuffers(1, &quadVBO);
+// 		glBindVertexArray(quadVAO);
+//
+// 		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+// 		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+//
+// 		glEnableVertexAttribArray(0);
+// 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+// 		glEnableVertexAttribArray(1);
+// 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+// 	}
+//
+// 	glBindVertexArray(quadVAO);
+// 	glDrawArrays(GL_TRIANGLES, 0, 6);
+// 	glBindVertexArray(0);
+// }
+//
+//
+// void renderDepthMap() {
+// 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+// 	depthMapViewShader.useShaderProgram();
+//
+// 	// Set the uniform for the depth map texture
+// 	GLint depthMapLocation = glGetUniformLocation(depthMapViewShader.shaderProgram, "depthMap");
+// 	glUniform1i(depthMapLocation, 0); // Texture unit 0
+//
+// 	// Bind the depth map texture
+// 	glActiveTexture(GL_TEXTURE0);
+// 	glBindTexture(GL_TEXTURE_2D, depthMap);
+//
+// 	// Render the quad
+// 	renderQuad();
+// }
+//

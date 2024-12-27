@@ -24,6 +24,13 @@ namespace globals
 	}
 
 	/* Mesh drawing function - also applies associated textures */
+	void Mesh::DrawDepth(globals::Shader depthShader) {
+		depthShader.useShaderProgram();
+		glBindVertexArray(this->buffers.VAO);
+		glDrawElements(GL_TRIANGLES, (GLsizei)this->indices.size(), GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+	}
+
 	void Mesh::Draw(globals::Shader shader) {
 		shader.useShaderProgram();
 

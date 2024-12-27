@@ -17,7 +17,7 @@ void setMatrixViewBasicShader() {
 	globals::getBasicShader().useShaderProgram();
 
 	globals::Camera& myCamera = globals::getCamera();
-	globals_structs::ShaderLocations& shaderLocations = globals::getBasicShaderLocations();
+	globals_structs::ShaderLocationsBasic& shaderLocations = globals::getBasicShaderLocations();
 
 	glm::mat4 view = myCamera.getViewMatrix();
 	glUniformMatrix4fv(shaderLocations.viewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -27,7 +27,7 @@ void setMatrixProjectionBasicShader() {
 	globals::getBasicShader().useShaderProgram();
 
 	globals_structs::MatricesShaderCommon& matrices = globals::getMatrices();
-	globals_structs::ShaderLocations& shaderLocations = globals::getBasicShaderLocations();
+	globals_structs::ShaderLocationsBasic& shaderLocations = globals::getBasicShaderLocations();
 	globals::Window& window = globals::getWindow();
 	glm::mat4 projection = glm::perspective(glm::radians(45.0f),
 	                                        (float)window.getWindowDimensions().width / (float)window.

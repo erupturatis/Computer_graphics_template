@@ -1,5 +1,9 @@
 #include "Camera.hpp"
 
+#include "Bindings.h"
+#include "Collisions.h"
+
+
 namespace globals
 {
     void Camera::initializeCamera(glm::vec3 cameraPosition, glm::vec3 cameraTarget, glm::vec3 cameraUp) {
@@ -100,5 +104,31 @@ namespace globals
 
     glm::vec3 Camera::getPosition() {
         return cameraPosition;
+    }
+
+
+    void processCameraMovement() {
+        globals::Camera& myCamera = globals::getCamera();
+        float cameraSpeed = globals_configs::getCameraSpeed();
+
+        if (globals::isKeyPressed(GLFW_KEY_W) && checkCollision(globals::MOVE_FORWARD) == false) {
+            myCamera.move(globals::MOVE_FORWARD, cameraSpeed);
+            setMatrixViewBasicShader();
+        }
+
+        if (globals::isKeyPressed(GLFW_KEY_S) && checkCollision(globals::MOVE_BACKWARD) == false) {
+            myCamera.move(globals::MOVE_BACKWARD, cameraSpeed);
+            setMatrixViewBasicShader();
+        }
+
+        if (globals::isKeyPressed(GLFW_KEY_A) && checkCollision(globals::MOVE_LEFT) == false) {
+            myCamera.move(globals::MOVE_LEFT, cameraSpeed);
+            setMatrixViewBasicShader();
+        }
+
+        if (globals::isKeyPressed(GLFW_KEY_D) && checkCollision(globals::MOVE_RIGHT) == false) {
+            myCamera.move(globals::MOVE_RIGHT, cameraSpeed);
+            setMatrixViewBasicShader();
+        }
     }
 }

@@ -3,6 +3,17 @@
 
 namespace globals
 {
+    float getRandomFloat(float min, float max) {
+        std::random_device rd; // Seed for randomness
+        std::mt19937 gen(rd()); // Mersenne Twister engine
+        std::uniform_real_distribution<float> dist(min, max);
+        return dist(gen);
+    }
+
+    int get_terrain_index(int i, int j, int terrain_blocks_count) {
+        return i * terrain_blocks_count + j;
+    }
+
     std::pair<glm::vec3, glm::vec3> calculateBoundingBox(const std::vector<globals::Vertex>& vertices) {
         if (vertices.empty()) {
             std::cerr << "No vertices to compute bounding box" << std::endl;

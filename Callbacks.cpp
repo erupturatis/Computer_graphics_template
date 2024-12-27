@@ -31,6 +31,11 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 		globals_configs::setWireframeMode(!currentSetting);
 	}
 
+	if (key == GLFW_KEY_X && action == GLFW_PRESS) {
+		bool currentSetting = globals_configs::getAcceleratedDayNightCycle();
+		globals_configs::setAcceleratedDayNightCycle(!currentSetting);
+	}
+
 	globals::registerKeyPress(key, action);
 }
 

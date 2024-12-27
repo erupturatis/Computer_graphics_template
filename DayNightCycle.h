@@ -1,9 +1,10 @@
-#ifndef SCENE_H
-#define SCENE_H
-#include "Model3D.hpp"
+//
+// Created by eugen on 12/27/2024.
+//
 
+#ifndef DAYNIGHTCYCLE_H
+#define DAYNIGHTCYCLE_H
 #define GLM_ENABLE_EXPERIMENTAL
-#include <vector>
 #include "glm/glm.hpp"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -13,24 +14,9 @@
 #include <glm/gtc/type_ptr.hpp> //glm extension for accessing the internal data structure of glm types
 #include <glm/gtx/string_cast.hpp>
 
-namespace scene
+namespace day_night_cycle
 {
-	std::vector<globals::Model3D*>& getModels3D();
-
-	void loadBook();
-	void loadTerrain();
-	void loadShrooms();
-	void loadHouse1();
-
-	void initTerrain();
-	void initShrooms();
-	void initBook();
-	void initHouse1();
-
-	void renderTerrain(bool depth = false);
-	void renderShrooms(bool depth = false);
-	void renderBook(bool depth = false);
-	void renderHouse1(bool depth = false);
+	void handleLightsDayNightCycle();
 }
 
-#endif //SCENE_H
+#endif //DAYNIGHTCYCLE_H

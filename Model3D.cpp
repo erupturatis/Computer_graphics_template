@@ -93,6 +93,11 @@ namespace globals
 	}
 
 	// Draw each mesh from the model
+	void Model3D::DrawDepth(globals::Shader shaderProgram) {
+		for (int i = 0; i < meshes.size(); i++)
+			meshes[i].DrawDepth(shaderProgram);
+	}
+
 	void Model3D::Draw(globals::Shader shaderProgram) {
 		for (int i = 0; i < meshes.size(); i++)
 			meshes[i].Draw(shaderProgram);

@@ -25,6 +25,14 @@ add_executable(computer_graphics
         Callbacks.h
         Scene.cpp
         Scene.h
+        Others.cpp
+        Others.h
+        Collisions.cpp
+        Collisions.h
+        Lights.cpp
+        Lights.h
+        DayNightCycle.cpp
+        DayNightCycle.h
 )
 
 target_include_directories(computer_graphics PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs)
