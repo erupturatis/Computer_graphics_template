@@ -32,8 +32,8 @@ namespace scene
 	std::vector<glm::vec3> shrooms_random_rotations;
 	std::vector<float> shrooms_random_scales;
 	float shroom_default_y = 0.65f;
-	float shroom_scale = 1.0f;
-	int shrooms_count = 20;
+	float shroom_scale = 3.0f;
+	int shrooms_count = 1;
 	int shrooms_types_start = 1;
 	int shrooms_types_end = 3;
 
@@ -166,8 +166,8 @@ namespace scene
 		house1.initializeBoundingBoxes();
 		house1.bindBoundingBoxesGPU();
 		house1.calculateBoundingBoxes();
-		terrain_binding_house1.i = 3;
-		terrain_binding_house1.j = 2;
+		terrain_binding_house1.i = 1;
+		terrain_binding_house1.j = 1;
 	}
 
 
@@ -338,28 +338,15 @@ namespace scene
 	}
 
 	glm::mat4 calculateLightSpaceMatrix() {
-		float near_plane = 0.1f, far_plane = 40.0f;
-		float frustum_scale = 20.0f;
-		float light_distance = 10.0f;
-		glm::mat4 lightProjection = glm::ortho(-frustum_scale, frustum_scale,
-		                                       -frustum_scale, frustum_scale,
-		                                       near_plane, far_plane);
+		glm::mat4 lightView = glm::lookAt(globals::getLightDirDir() * 20.0f, glm::vec3(0.0f),
+		                                  glm::vec3(0.0f, 1.0f, 0.0f));
+		const GLfloat near_plane = 0.1f, far_plane = 50.0f;
+		float scaler = 20.0f;
+		glm::mat4 lightProjection = glm::ortho(-1.0f * scaler, 1.0f * scaler, -1.0f * scaler, 1.0f * scaler, near_plane,
+		                                       far_plane);
+		glm::mat4 lightSpaceTrMatrix = lightProjection * lightView;
 
-		glm::vec3 normalizedLightDir = glm::normalize(globals::getLightDirDir());
-		glm::vec3 offsetXaxis = glm::vec3(terrain_block_distance_x_axis_j_coord * terrain_blocks_count * 0.5f, 0.0f,
-		                                  0.0f);
-		glm::vec3 offsetZaxis = glm::vec3(
-			0.0f, 0.0f, terrain_block_distance_z_axis_i_coord * terrain_blocks_count * 0.5f);
-		glm::vec3 lightPosition = normalizedLightDir * light_distance + offsetXaxis + offsetZaxis;
-
-		glm::mat4 lightView = glm::lookAt(
-			lightPosition, // Light position
-			glm::vec3(0.0f, 0.0f, 0.0f) + offsetXaxis + offsetZaxis, // Look at origin
-			glm::vec3(0.0f, 0.0f, -1.0f) // Up vector
-		);
-
-		glm::mat4 lightSpaceMatrix = lightProjection * lightView;
-		return lightSpaceMatrix;
+		return lightSpaceTrMatrix;
 	}
 
 	void renderHouse1(bool depth) {

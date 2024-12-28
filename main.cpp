@@ -38,11 +38,12 @@ globals::Shader depthMapViewShader;
 globals::Shader fragPosLightSpaceShader;
 
 void loadModels() {
-	scene::loadBook();
 	scene::loadTerrain();
-	scene::loadShrooms();
 	scene::loadHouse1();
+	scene::loadShrooms();
+	// scene::loadBook();
 }
+
 
 void loadShaders() {
 	globals::Shader& myBasicShader = globals::getBasicShader();
@@ -80,77 +81,56 @@ void initLightSpaceMatrices() {
 
 void initShadows() {
 	glGenFramebuffers(1, &depthMapFBO);
-
+	//create depth texture for FBO
 	glGenTextures(1, &depthMap);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
 	             globals::getShadowWidth(), globals::getShadowHeight(), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	float borderColor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
+	//attach texture to FBO
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap,
+	                       0);
+
 	glDrawBuffer(GL_NONE);
 	glReadBuffer(GL_NONE);
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		std::cerr << "Error: Depth framebuffer is not complete!" << std::endl;
-	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 
 void initObjectsScene() {
-	scene::initBook();
-	scene::initShrooms();
 	scene::initTerrain();
 	scene::initHouse1();
+	scene::initShrooms();
+	// scene::initBook();
 }
 
 
 void renderSceneDepth() {
 	scene::renderTerrain(true);
 	scene::renderHouse1(true);
-	scene::renderBook(true);
 	scene::renderShrooms(true);
+	// scene::renderBook(true);
 }
 
 void renderSceneNormal() {
 	scene::renderTerrain(false);
 	scene::renderHouse1(false);
-	scene::renderBook(false);
 	scene::renderShrooms(false);
+	// scene::renderBook(false);
 
 	if (globals_configs::getWireframeMode())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
-
-void renderSceneWithShadows() {
-	// render scene for depth
-	glViewport(0, 0, globals::getShadowWidth(), globals::getShadowHeight());
-	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-	glClear(GL_DEPTH_BUFFER_BIT);
-	initLightSpaceMatrices();
-	renderSceneDepth();
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	// render scene normally
-	glViewport(0, 0, globals::getWindowWidth(), globals::getWindowHeight());
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	initBasicShaderMatrices();
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, depthMap);
-	glUniform1i(glGetUniformLocation(globals::getBasicShader().shaderProgram, "shadowMap"), 0);
-
-	renderSceneNormal();
-}
-
 
 unsigned int quadVAO = 0, quadVBO = 0;
 
@@ -197,12 +177,68 @@ void renderDepthMap() {
 
 	GLint depthMapLocation = glGetUniformLocation(depthMapViewShader.shaderProgram, "depthMap");
 	glUniform1i(depthMapLocation, 0); // Texture unit 0
-
-	// Bind the depth map texture
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 
 	renderQuad();
+}
+
+void renderSceneWithShadows(bool renderDepth = false) {
+	// render scene for depth
+
+	glViewport(0, 0, globals::getShadowWidth(), globals::getShadowHeight());
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glClear(GL_DEPTH_BUFFER_BIT);
+	initLightSpaceMatrices();
+	renderSceneDepth();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	if (renderDepth == false) {
+		// render scene normally
+		glViewport(0, 0, globals::getWindowWidth(), globals::getWindowHeight());
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		globals::getBasicShader().useShaderProgram();
+		initBasicShaderMatrices();
+
+		globals_structs::ShaderLocationsBasic& shaderLocations = globals::getBasicShaderLocations();
+		glUniform3fv(shaderLocations.lightDirDir, 1,
+		             glm::value_ptr(
+			             globals::getLightDirDir()));
+		globals::Camera& myCamera = globals::getCamera();
+		glm::mat4 view = myCamera.getViewMatrix();
+		glUniformMatrix4fv(shaderLocations.viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glm::vec3 lightDir = globals::getLightDirDir();
+		glUniform3fv(shaderLocations.lightDirDir, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+
+		globals::Shader& basicShader = globals::getBasicShader();
+		globals_structs::ShaderLocationsBasic& basicShaderLocations = globals::getBasicShaderLocations();
+		basicShader.useShaderProgram();
+		glUniformMatrix4fv(basicShaderLocations.lightSpaceMatrix, 1, GL_FALSE,
+		                   glm::value_ptr(scene::calculateLightSpaceMatrix()));
+
+		//bind the shadow map
+		// glActiveTexture(GL_TEXTURE3);
+		// glBindTexture(GL_TEXTURE_2D, depthMap);
+		// glUniform1i(glGetUniformLocation(basicShader.shaderProgram, "shadowMap"), 3);
+
+		glUseProgram(basicShader.shaderProgram); // Ensure the shader program is in use
+		GLint depthMapLocation = glGetUniformLocation(basicShader.shaderProgram, "shadowMap");
+
+		if (depthMapLocation == -1) {
+			std::cerr << "Error: shadowMap uniform not found in shader!" << std::endl;
+		}
+		else {
+			std::cout << "Shadow amp used in shader" << std::endl;
+			glUniform1i(depthMapLocation, 3); // Bind shadowMap to texture unit 0
+			glActiveTexture(GL_TEXTURE3); // Activate texture unit 0
+			glBindTexture(GL_TEXTURE_2D, depthMap); // Bind the depth map texture
+		}
+
+		renderSceneNormal();
+	}
+	else {
+		renderDepthMap();
+	}
 }
 
 
@@ -280,9 +316,9 @@ int main(int argc, const char* argv[]) {
 		// cameraAnimation::updateCameraAnimation(deltaTime);
 		// day_night_cycle::handleLightsDayNightCycle();
 
-		renderSceneWithShadows();
-		// renderDepthMap();
+		renderSceneWithShadows(false);
 		// renderFragPosLightSpace();
+		// renderDepthMap();
 
 		glfwPollEvents();
 		glfwSwapBuffers(myWindow.getWindow());
@@ -295,3 +331,4 @@ int main(int argc, const char* argv[]) {
 
 	return EXIT_SUCCESS;
 }
+

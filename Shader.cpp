@@ -1,5 +1,7 @@
 #include "Shader.hpp"
 
+#include <glm/gtc/type_ptr.inl>
+
 #include "GlobalObjects.h"
 
 namespace globals
@@ -86,7 +88,7 @@ namespace globals
 	}
 
 	void Shader::setMat4(const std::string& name, const glm::mat4& value) {
-		glUniformMatrix4fv(glGetUniformLocation(this->shaderProgram, name.c_str()), 1, GL_FALSE, &value[0][0]);
+		glUniformMatrix4fv(glGetUniformLocation(this->shaderProgram, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
 	}
 
 	void Shader::setInt(const std::string& name, int value) {
@@ -100,37 +102,19 @@ namespace globals
 		GLuint shaderProgram = myBasicShader.shaderProgram;
 		globals_structs::ShaderLocationsBasic& shaderLocations = globals::getBasicShaderLocations();
 
-		// Retrieve uniform locations
+		// vertex shader
 		shaderLocations.viewLoc = glGetUniformLocation(shaderProgram, "view");
 		shaderLocations.modelLoc = glGetUniformLocation(shaderProgram, "model");
-		shaderLocations.normalMatrixLoc = glGetUniformLocation(shaderProgram, "normalMatrix");
 		shaderLocations.projectionLoc = glGetUniformLocation(shaderProgram, "projection");
+		shaderLocations.lightSpaceMatrix = glGetUniformLocation(shaderProgram, "lightSpaceMatrix");
+		shaderLocations.normalMatrixLoc = glGetUniformLocation(shaderProgram, "normalMatrix");
+
+		// fragment shader specific
+		shaderLocations.shadowMap = glGetUniformLocation(shaderProgram, "shadowMap");
 		shaderLocations.lightDirDir = glGetUniformLocation(shaderProgram, "lightDir");
 		shaderLocations.lightDirColor = glGetUniformLocation(shaderProgram, "lightColor");
-		shaderLocations.lightPointLoc = glGetUniformLocation(shaderProgram, "lightPointLoc");
-		shaderLocations.lightPointColor = glGetUniformLocation(shaderProgram, "lightPointColor");
-		shaderLocations.lightSpaceMatrix = glGetUniformLocation(shaderProgram, "lightSpaceMatrix");
-
-		// Validate uniform locations
-		if (shaderLocations.modelLoc == -1) {
-			std::cerr << "Invalid uniform location for 'model'" << std::endl;
-		}
-
-		if (shaderLocations.viewLoc == -1) {
-			std::cerr << "Invalid uniform location for 'view'" << std::endl;
-		}
-
-		if (shaderLocations.projectionLoc == -1) {
-			std::cerr << "Invalid uniform location for 'projection'" << std::endl;
-		}
-
-		if (shaderLocations.normalMatrixLoc == -1) {
-			std::cerr << "Invalid uniform location for 'normalMatrix'" << std::endl;
-		}
-
-		if (shaderLocations.lightDirDir == -1) {
-			std::cerr << "Invalid uniform location for 'lightDir'" << std::endl;
-		}
+		// shaderLocations.lightPointLoc = glGetUniformLocation(shaderProgram, "lightPointLoc");
+		// shaderLocations.lightPointColor = glGetUniformLocation(shaderProgram, "lightPointColor");
 	}
 
 	void initDepthShaderLocations() {

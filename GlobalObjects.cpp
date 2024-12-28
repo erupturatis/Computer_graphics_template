@@ -16,14 +16,24 @@ namespace globals
     globals_structs::MatricesShaderCommon matrices;
     GLboolean pressedKeys[1024];
 
-    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+    const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
     const unsigned int WINDOW_WIDTH = 1024, WINDOW_HEIGHT = 768;
 
     glm::vec3 lightDirDir;
     glm::vec3 lightDirColor;
+    float lightDirRot;
+
     glm::vec3 backgroundColor;
     glm::vec3 lightPointLoc;
     glm::vec3 lightPointColor;
+
+    float getLightDirRot() {
+        return lightDirRot;
+    }
+
+    void setLightDirRot(float newLightDirRot) {
+        lightDirRot = newLightDirRot;
+    }
 
     void setDepthShader(globals::Shader newShader) {
         depthShader = newShader;

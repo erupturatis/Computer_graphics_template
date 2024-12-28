@@ -8,6 +8,9 @@
 
 namespace globals
 {
+    void setLightDirRot(float newLightDirRot);
+    float getLightDirRot();
+
     globals::Camera& getCamera();
     void setCamera(globals::Camera camera);
 
