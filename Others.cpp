@@ -43,5 +43,5 @@ void initOpenGLState() {
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 
-	glDisable(GL_CULL_FACE);
+	// glDisable(GL_CULL_FACE);
 }

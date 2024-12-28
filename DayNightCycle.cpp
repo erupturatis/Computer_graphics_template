@@ -70,11 +70,10 @@ namespace day_night_cycle
 			backgroundColor = glm::mix(backgroundNightColor, backgroundDayColor, t);
 		}
 
-		float cycle = normalizedTime / 1.5f * glm::two_pi<float>();
+		float cycle = normalizedTime / 1.5f * 360.0f;
 
-		glm::vec3 lightDirDir = glm::vec3(cos(cycle), sin(cycle), 0.0f);
-		glUniform3fv(shaderLocations.lightDirDir, 1, glm::value_ptr(lightDirDir));
-		glUniform3fv(shaderLocations.lightDirColor, 1, glm::value_ptr(lightDirColor));
+		globals::setLightDirColor(lightDirColor);
+		globals::setLightDirRotationAngle(cycle + 90.0f);
 
 		glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, 1.0f);
 	}

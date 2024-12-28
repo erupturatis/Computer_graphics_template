@@ -32,8 +32,8 @@ namespace scene
 	std::vector<glm::vec3> shrooms_random_rotations;
 	std::vector<float> shrooms_random_scales;
 	float shroom_default_y = 0.65f;
-	float shroom_scale = 3.0f;
-	int shrooms_count = 1;
+	float shroom_scale = 1.0f;
+	int shrooms_count = 30;
 	int shrooms_types_start = 1;
 	int shrooms_types_end = 3;
 
@@ -166,8 +166,8 @@ namespace scene
 		house1.initializeBoundingBoxes();
 		house1.bindBoundingBoxesGPU();
 		house1.calculateBoundingBoxes();
-		terrain_binding_house1.i = 1;
-		terrain_binding_house1.j = 1;
+		terrain_binding_house1.i = 3;
+		terrain_binding_house1.j = 2;
 	}
 
 
@@ -255,9 +255,17 @@ namespace scene
 			transformation_base;
 
 		if (depth == false) {
+			globals::Camera& myCamera = globals::getCamera();
+			glm::mat4 view = myCamera.getViewMatrix();
+
 			glm::vec3 finalBookPosition = glm::vec3(transformation_base[3]);
 			finalBookPosition.y = 1.0f;
-			globals::setLightPointLoc(finalBookPosition);
+
+			glm::vec4 pointLightPosWorld = glm::vec4(finalBookPosition, 1.0f);
+			glm::vec4 pointLightPosEye = view * pointLightPosWorld;
+			glm::vec3 pointLightPosEye3 = glm::vec3(pointLightPosEye);
+
+			globals::setLightPointLoc(pointLightPosEye3);
 			glUniform3fv(shaderLocations.lightPointLoc, 1, glm::value_ptr(globals::getLightPointLoc()));
 		}
 
@@ -339,15 +347,15 @@ namespace scene
 
 	glm::mat4 calculateLightSpaceMatrix() {
 		float distance_light = 20.0f;
-		float angle = glfwGetTime() * 10.0f;
-		glm::mat4 lightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::vec3 offset = glm::vec3(10.0f, 0.0f, 10.0f);
+		glm::mat4 lightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(globals::getLightDirRotationAngle()),
+		                                      globals::getLightDirRotationAxis());
 
-		// glm::mat4 lightView = glm::lookAt(*lightDir, glm::vec3(0.0f),
-		//                                   glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::mat4 lightView = glm::lookAt(
-			glm::inverseTranspose(glm::mat3(lightRotation)) * globals::getLightDirDir() * distance_light,
-			glm::vec3(0.0f),
+			glm::inverseTranspose(glm::mat3(lightRotation)) * globals::getLightDirDir() * distance_light + offset,
+			glm::vec3(0.0f) + offset,
 			glm::vec3(0.0f, 1.0f, 0.0f));
+
 		const GLfloat near_plane = 0.1f, far_plane = 50.0f;
 		float scaler = 25.0f;
 		glm::mat4 lightProjection = glm::ortho(-1.0f * scaler, 1.0f * scaler, -1.0f * scaler, 1.0f * scaler, near_plane,

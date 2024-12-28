@@ -111,10 +111,12 @@ namespace globals
 
 		// fragment shader specific
 		shaderLocations.shadowMap = glGetUniformLocation(shaderProgram, "shadowMap");
+
 		shaderLocations.lightDirDir = glGetUniformLocation(shaderProgram, "lightDir");
 		shaderLocations.lightDirColor = glGetUniformLocation(shaderProgram, "lightColor");
-		// shaderLocations.lightPointLoc = glGetUniformLocation(shaderProgram, "lightPointLoc");
-		// shaderLocations.lightPointColor = glGetUniformLocation(shaderProgram, "lightPointColor");
+
+		shaderLocations.lightPointLoc = glGetUniformLocation(shaderProgram, "lightPointLoc");
+		shaderLocations.lightPointColor = glGetUniformLocation(shaderProgram, "lightPointColor");
 	}
 
 	void initDepthShaderLocations() {
@@ -126,15 +128,6 @@ namespace globals
 		// Retrieve uniform locations
 		shaderLocations.lightSpaceMatrix = glGetUniformLocation(shaderProgram, "lightSpaceMatrix");
 		shaderLocations.model = glGetUniformLocation(shaderProgram, "model");
-
-		// Validate uniform locations
-		if (shaderLocations.lightSpaceMatrix == -1) {
-			std::cerr << "Invalid uniform location for 'lightSpaceMatrix'" << std::endl;
-		}
-
-		if (shaderLocations.model == -1) {
-			std::cerr << "Invalid uniform location for 'model'" << std::endl;
-		}
 	}
 
 	void initShadersLocations() {

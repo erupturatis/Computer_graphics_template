@@ -8,8 +8,11 @@
 
 namespace globals
 {
-    void setLightDirRot(float newLightDirRot);
-    float getLightDirRot();
+    void setLightDirRotationAngle(float newLightDirRot);
+    float getLightDirRotationAngle();
+
+    void setLightDirRotationAxis(glm::vec3 newLightDirRotAxis);
+    glm::vec3 getLightDirRotationAxis();
 
     globals::Camera& getCamera();
     void setCamera(globals::Camera camera);

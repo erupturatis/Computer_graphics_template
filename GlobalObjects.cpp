@@ -21,18 +21,27 @@ namespace globals
 
     glm::vec3 lightDirDir;
     glm::vec3 lightDirColor;
-    float lightDirRot;
+    glm::vec3 lightDirRotationAxis;
+    float lightDirRotationAngle;
 
     glm::vec3 backgroundColor;
     glm::vec3 lightPointLoc;
     glm::vec3 lightPointColor;
 
-    float getLightDirRot() {
-        return lightDirRot;
+    void setLightDirRotationAxis(glm::vec3 newLightDirRotAxis) {
+        lightDirRotationAxis = newLightDirRotAxis;
     }
 
-    void setLightDirRot(float newLightDirRot) {
-        lightDirRot = newLightDirRot;
+    glm::vec3 getLightDirRotationAxis() {
+        return lightDirRotationAxis;
+    }
+
+    float getLightDirRotationAngle() {
+        return lightDirRotationAngle;
+    }
+
+    void setLightDirRotationAngle(float newLightDirRot) {
+        lightDirRotationAngle = newLightDirRot;
     }
 
     void setDepthShader(globals::Shader newShader) {

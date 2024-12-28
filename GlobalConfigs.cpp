@@ -7,6 +7,15 @@ namespace globals_configs
     GLfloat cameraSpeed = 0.1f;
     bool wireframeMode = false;
     bool acceleratedDayNightCycle = false;
+    bool applyFog = false;
+
+    bool getApplyFog() {
+        return globals_configs::applyFog;
+    }
+
+    void setApplyFog(bool fog) {
+        globals_configs::applyFog = fog;
+    }
 
     bool getWireframeMode() {
         return globals_configs::wireframeMode;

@@ -41,7 +41,7 @@ void loadModels() {
 	scene::loadTerrain();
 	scene::loadHouse1();
 	scene::loadShrooms();
-	// scene::loadBook();
+	scene::loadBook();
 }
 
 
@@ -65,21 +65,50 @@ void initBasicShaderMatrices() {
 	setMatrixProjectionBasicShader();
 }
 
-void initLightSpaceMatrices() {
+void initShadowMapTexture() {
+	globals::Shader& basicShader = globals::getBasicShader();
+	glUseProgram(basicShader.shaderProgram); // Ensure the shader program is in use
+	GLint depthMapLocation = glGetUniformLocation(basicShader.shaderProgram, "shadowMap");
+	if (depthMapLocation == -1) {
+		std::cerr << "Error: shadowMap uniform not found in shader!" << std::endl;
+	}
+	else {
+		glUniform1i(depthMapLocation, 3);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
+	}
+}
+
+void initLightsMatrices() {
+	globals::Camera& myCamera = globals::getCamera();
+	globals::Shader& basicShader = globals::getBasicShader();
+	basicShader.useShaderProgram();
+	globals_structs::ShaderLocationsBasic& basicShaderLocations = globals::getBasicShaderLocations();
+	glm::mat4 view = myCamera.getViewMatrix();
+	glm::vec3 lightDir = globals::getLightDirDir();
+	glm::mat4 lightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(globals::getLightDirRotationAngle()),
+	                                      globals::getLightDirRotationAxis());
+
+	// set light direction adjusted
+	glUniform3fv(basicShaderLocations.lightDirDir, 1,
+	             glm::value_ptr(glm::inverseTranspose(glm::mat3(view * lightRotation)) * lightDir));
+	// set light color
+	glUniform3fv(basicShaderLocations.lightDirColor, 1, glm::value_ptr(globals::getLightDirColor()));
+	// set lightSpaceMatrix
+	glUniformMatrix4fv(basicShaderLocations.lightSpaceMatrix, 1, GL_FALSE,
+	                   glm::value_ptr(scene::calculateLightSpaceMatrix()));
+}
+
+void initLightSpaceDepthShader() {
 	glm::mat4 lightSpaceMatrix = scene::calculateLightSpaceMatrix();
 
 	globals::Shader& depthShader = globals::getDepthShader();
 	globals_structs::ShaderLocationsDepth& depthShaderLocations = globals::getDepthShaderLocations();
 	depthShader.useShaderProgram();
 	glUniformMatrix4fv(depthShaderLocations.lightSpaceMatrix, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
-
-	globals::Shader& basicShader = globals::getBasicShader();
-	globals_structs::ShaderLocationsBasic& basicShaderLocations = globals::getBasicShaderLocations();
-	basicShader.useShaderProgram();
-	glUniformMatrix4fv(basicShaderLocations.lightSpaceMatrix, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 }
 
-void initShadows() {
+void initShadowsSettings() {
 	glGenFramebuffers(1, &depthMapFBO);
 	//create depth texture for FBO
 	glGenTextures(1, &depthMap);
@@ -109,7 +138,7 @@ void initObjectsScene() {
 	scene::initTerrain();
 	scene::initHouse1();
 	scene::initShrooms();
-	// scene::initBook();
+	scene::initBook();
 }
 
 
@@ -117,14 +146,14 @@ void renderSceneDepth() {
 	scene::renderTerrain(true);
 	scene::renderHouse1(true);
 	scene::renderShrooms(true);
-	// scene::renderBook(true);
+	scene::renderBook(true);
 }
 
 void renderSceneNormal() {
 	scene::renderTerrain(false);
 	scene::renderHouse1(false);
 	scene::renderShrooms(false);
-	// scene::renderBook(false);
+	scene::renderBook(false);
 
 	if (globals_configs::getWireframeMode())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -170,7 +199,6 @@ void renderQuad() {
 	glBindVertexArray(0);
 }
 
-
 void renderDepthMap() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	depthMapViewShader.useShaderProgram();
@@ -189,49 +217,21 @@ void renderSceneWithShadows(bool renderDepth = false) {
 	glViewport(0, 0, globals::getShadowWidth(), globals::getShadowHeight());
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glClear(GL_DEPTH_BUFFER_BIT);
-	initLightSpaceMatrices();
+	initLightSpaceDepthShader();
 	renderSceneDepth();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	if (renderDepth == false) {
-		// render scene normally
 		glViewport(0, 0, globals::getWindowWidth(), globals::getWindowHeight());
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		globals::getBasicShader().useShaderProgram();
 		initBasicShaderMatrices();
+		initLightsMatrices();
+		initShadowMapTexture();
+		// set boolean uniform for fog to true
 
-		globals_structs::ShaderLocationsBasic& shaderLocations = globals::getBasicShaderLocations();
-		glUniform3fv(shaderLocations.lightDirDir, 1,
-		             glm::value_ptr(
-			             globals::getLightDirDir()));
-		globals::Camera& myCamera = globals::getCamera();
-		glm::mat4 view = myCamera.getViewMatrix();
-		glUniformMatrix4fv(shaderLocations.viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		glm::vec3 lightDir = globals::getLightDirDir();
-
-		float angle = glfwGetTime() * 10.0f;
-		glm::mat4 lightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
-		glUniform3fv(shaderLocations.lightDirDir, 1,
-		             glm::value_ptr(glm::inverseTranspose(glm::mat3(view * lightRotation)) * lightDir));
-
-		globals::Shader& basicShader = globals::getBasicShader();
-		globals_structs::ShaderLocationsBasic& basicShaderLocations = globals::getBasicShaderLocations();
-		basicShader.useShaderProgram();
-		glUniformMatrix4fv(basicShaderLocations.lightSpaceMatrix, 1, GL_FALSE,
-		                   glm::value_ptr(scene::calculateLightSpaceMatrix()));
-
-		glUseProgram(basicShader.shaderProgram); // Ensure the shader program is in use
-		GLint depthMapLocation = glGetUniformLocation(basicShader.shaderProgram, "shadowMap");
-
-		if (depthMapLocation == -1) {
-			std::cerr << "Error: shadowMap uniform not found in shader!" << std::endl;
-		}
-		else {
-			//std::cout << "Shadow amp used in shader" << std::endl;
-			glUniform1i(depthMapLocation, 3);
-			glActiveTexture(GL_TEXTURE3);
-			glBindTexture(GL_TEXTURE_2D, depthMap);
-		}
+		GLint fogLocation = glGetUniformLocation(globals::getBasicShader().shaderProgram, "applyFog");
+		glUniform1i(fogLocation, globals_configs::getApplyFog());
 
 		renderSceneNormal();
 	}
@@ -265,22 +265,6 @@ int countNonWhiteDepthValues(unsigned int depthMap, int width, int height, float
 	return count;
 }
 
-void renderFragPosLightSpace() {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// Use the visualization shader
-	fragPosLightSpaceShader.useShaderProgram();
-
-	// Bind the FragPosLightSpace map (a framebuffer texture from your scene rendering)
-	GLint fragPosLightSpaceLocation = glGetUniformLocation(fragPosLightSpaceShader.shaderProgram,
-	                                                       "fragPosLightSpaceMap");
-	glUniform1i(fragPosLightSpaceLocation, 0); // Texture unit 0
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, depthMap); // Replace `depthMap` with your actual FragPosLightSpace texture
-
-	renderQuad(); // Render to a full-screen quad
-}
-
 
 int main(int argc, const char* argv[]) {
 	try {
@@ -297,7 +281,7 @@ int main(int argc, const char* argv[]) {
 	globals::initShadersLocations();
 	initBasicShaderMatrices();
 	lights::initLights();
-	initShadows();
+	initShadowsSettings();
 	initObjectsScene();
 	bindWindowAndKeyboardCallbacks();
 
@@ -312,12 +296,10 @@ int main(int argc, const char* argv[]) {
 		lastFrameTime = currentFrameTime;
 
 		globals::processCameraMovement();
-		// cameraAnimation::updateCameraAnimation(deltaTime);
-		// day_night_cycle::handleLightsDayNightCycle();
+		cameraAnimation::updateCameraAnimation(deltaTime);
+		day_night_cycle::handleLightsDayNightCycle();
 
 		renderSceneWithShadows(false);
-		// renderFragPosLightSpace();
-		// renderDepthMap();
 
 		glfwPollEvents();
 		glfwSwapBuffers(myWindow.getWindow());

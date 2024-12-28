@@ -16,6 +16,9 @@ namespace globals_configs
 
     bool getAcceleratedDayNightCycle();
     void setAcceleratedDayNightCycle(bool accelerated);
+
+    bool getApplyFog();
+    void setApplyFog(bool fog);
 }
 
 #endif // GLOBAL_CONFIGS_H
