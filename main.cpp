@@ -208,18 +208,17 @@ void renderSceneWithShadows(bool renderDepth = false) {
 		glm::mat4 view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(shaderLocations.viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glm::vec3 lightDir = globals::getLightDirDir();
-		glUniform3fv(shaderLocations.lightDirDir, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+
+		float angle = glfwGetTime() * 10.0f;
+		glm::mat4 lightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+		glUniform3fv(shaderLocations.lightDirDir, 1,
+		             glm::value_ptr(glm::inverseTranspose(glm::mat3(view * lightRotation)) * lightDir));
 
 		globals::Shader& basicShader = globals::getBasicShader();
 		globals_structs::ShaderLocationsBasic& basicShaderLocations = globals::getBasicShaderLocations();
 		basicShader.useShaderProgram();
 		glUniformMatrix4fv(basicShaderLocations.lightSpaceMatrix, 1, GL_FALSE,
 		                   glm::value_ptr(scene::calculateLightSpaceMatrix()));
-
-		//bind the shadow map
-		// glActiveTexture(GL_TEXTURE3);
-		// glBindTexture(GL_TEXTURE_2D, depthMap);
-		// glUniform1i(glGetUniformLocation(basicShader.shaderProgram, "shadowMap"), 3);
 
 		glUseProgram(basicShader.shaderProgram); // Ensure the shader program is in use
 		GLint depthMapLocation = glGetUniformLocation(basicShader.shaderProgram, "shadowMap");
@@ -228,10 +227,10 @@ void renderSceneWithShadows(bool renderDepth = false) {
 			std::cerr << "Error: shadowMap uniform not found in shader!" << std::endl;
 		}
 		else {
-			std::cout << "Shadow amp used in shader" << std::endl;
-			glUniform1i(depthMapLocation, 3); // Bind shadowMap to texture unit 0
-			glActiveTexture(GL_TEXTURE3); // Activate texture unit 0
-			glBindTexture(GL_TEXTURE_2D, depthMap); // Bind the depth map texture
+			//std::cout << "Shadow amp used in shader" << std::endl;
+			glUniform1i(depthMapLocation, 3);
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, depthMap);
 		}
 
 		renderSceneNormal();

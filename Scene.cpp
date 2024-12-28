@@ -338,10 +338,18 @@ namespace scene
 	}
 
 	glm::mat4 calculateLightSpaceMatrix() {
-		glm::mat4 lightView = glm::lookAt(globals::getLightDirDir() * 20.0f, glm::vec3(0.0f),
-		                                  glm::vec3(0.0f, 1.0f, 0.0f));
+		float distance_light = 20.0f;
+		float angle = glfwGetTime() * 10.0f;
+		glm::mat4 lightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+
+		// glm::mat4 lightView = glm::lookAt(*lightDir, glm::vec3(0.0f),
+		//                                   glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4 lightView = glm::lookAt(
+			glm::inverseTranspose(glm::mat3(lightRotation)) * globals::getLightDirDir() * distance_light,
+			glm::vec3(0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f));
 		const GLfloat near_plane = 0.1f, far_plane = 50.0f;
-		float scaler = 20.0f;
+		float scaler = 25.0f;
 		glm::mat4 lightProjection = glm::ortho(-1.0f * scaler, 1.0f * scaler, -1.0f * scaler, 1.0f * scaler, near_plane,
 		                                       far_plane);
 		glm::mat4 lightSpaceTrMatrix = lightProjection * lightView;
