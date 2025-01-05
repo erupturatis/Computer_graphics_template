@@ -8,6 +8,15 @@ namespace globals_configs
     bool wireframeMode = false;
     bool acceleratedDayNightCycle = false;
     bool applyFog = false;
+    bool applyCollisions = true;
+
+    bool getApplyCollisions() {
+        return globals_configs::applyCollisions;
+    }
+
+    void setApplyCollisions(bool collisions) {
+        globals_configs::applyCollisions = collisions;
+    }
 
     bool getApplyFog() {
         return globals_configs::applyFog;

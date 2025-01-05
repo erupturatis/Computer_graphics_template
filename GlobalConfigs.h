@@ -19,6 +19,9 @@ namespace globals_configs
 
     bool getApplyFog();
     void setApplyFog(bool fog);
+
+    bool getApplyCollisions();
+    void setApplyCollisions(bool collisions);
 }
 
 #endif // GLOBAL_CONFIGS_H

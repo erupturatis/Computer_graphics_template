@@ -40,6 +40,10 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 		bool currentSetting = globals_configs::getApplyFog();
 		globals_configs::setApplyFog(!currentSetting);
 	}
+	if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
+		bool currentSetting = globals_configs::getApplyCollisions();
+		globals_configs::setApplyCollisions(!currentSetting);
+	}
 
 	globals::registerKeyPress(key, action);
 }

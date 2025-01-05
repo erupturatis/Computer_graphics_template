@@ -20,7 +20,7 @@ namespace scene
 	globals::Model3D teapot;
 	// terrain
 	std::vector<globals::Model3D> terrain_blocks;
-	int terrain_blocks_count = 5;
+	int terrain_blocks_count = 7;
 	float terrain_block_distance_x_axis_j_coord = 5.0f;
 	float terrain_block_distance_z_axis_i_coord = 5.5f;
 	float terrain_block_scale = 0.5f;
@@ -32,22 +32,47 @@ namespace scene
 	std::vector<glm::vec3> shrooms_random_rotations;
 	std::vector<float> shrooms_random_scales;
 	float shroom_default_y = 0.65f;
-	float shroom_scale = 1.0f;
-	int shrooms_count = 30;
-	int shrooms_types_start = 1;
-	int shrooms_types_end = 3;
+	float shroom_scale = 0.005f;
+	int shrooms_count = 50;
+	int shrooms_types_start = 0;
+	int shrooms_types_end = 2;
 
-	// house
+	// trees
+	std::vector<globals::Model3D> trees;
+	std::vector<globals_structs::terrainBinding> trees_bindings;
+	std::vector<glm::vec3> trees_random_noise;
+	std::vector<glm::vec3> trees_random_rotations;
+	std::vector<float> trees_random_scales;
+	float trees_default_y = 2.0f;
+	float trees_scale = 0.010f;
+	int trees_count = 20;
+	int trees_types_start = 0;
+	int trees_types_end = 1;
+
+
+	// houses
 	globals::Model3D house1;
-	float house1_scale = 0.1f;
+	float house1_scale = 0.15f;
 	float house1_default_y = 0.5f;
 	globals_structs::terrainBinding terrain_binding_house1;
 
+	globals::Model3D house2;
+	float house2_scale = 0.45f;
+	float house2_default_y = 0.5f;
+	globals_structs::terrainBinding terrain_binding_house2;
+
+	globals::Model3D house3;
+	float house3_scale = 0.5f;
+	float house3_default_y = 0.5f;
+	globals_structs::terrainBinding terrain_binding_house3;
+
+	std::vector<globals_structs::terrainBinding> banished_terrain_bindings;
+
 	// others
 	globals::Model3D book;
-	float book_scale = 10.0f;
-	float book_default_y = 7.0f;
-	float book_float_variation = 3.0f;
+	float book_scale = 2.0f;
+	float book_default_y = 3.0f;
+	float book_float_variation = 1.0f;
 	globals_structs::terrainBinding terrain_binding_book;
 
 	void loadBook() {
@@ -73,6 +98,20 @@ namespace scene
 		}
 	}
 
+	void loadTrees() {
+		for (int i = 0; i < trees_count; i++) {
+			globals::Model3D tree = globals::Model3D();
+			trees.push_back(tree);
+		}
+
+		for (int i = 0; i < trees_count; i++) {
+			globals::Model3D& tree = trees[i];
+			int random_tree_type = trees_types_start + rand() % (trees_types_end - trees_types_start + 1);
+			tree.LoadModel("models/environment/trees/tree" + std::to_string(random_tree_type) + ".obj");
+			registerModel3d(tree);
+		}
+	}
+
 	void loadShrooms() {
 		for (int i = 0; i < shrooms_count; i++) {
 			globals::Model3D shroom = globals::Model3D();
@@ -82,14 +121,18 @@ namespace scene
 		for (int i = 0; i < shrooms_count; i++) {
 			globals::Model3D& shroom = shrooms[i];
 			int random_shroom_type = shrooms_types_start + rand() % (shrooms_types_end - shrooms_types_start + 1);
-			shroom.LoadModel("models/environment/shroom" + std::to_string(random_shroom_type) + ".obj");
+			shroom.LoadModel("models/environment/shrooms/shroom" + std::to_string(random_shroom_type) + ".obj");
 			registerModel3d(shroom);
 		}
 	}
 
-	void loadHouse1() {
+	void loadHouses() {
 		house1.LoadModel("models/environment/house1.obj");
 		registerModel3d(house1);
+		house2.LoadModel("models/environment/houses/house2.obj");
+		registerModel3d(house2);
+		house3.LoadModel("models/environment/houses/house3.obj");
+		registerModel3d(house3);
 	}
 
 
@@ -127,6 +170,48 @@ namespace scene
 		}
 	}
 
+	bool isOccupiedBounding(globals_structs::terrainBinding candidate) {
+		for (globals_structs::terrainBinding& binding : banished_terrain_bindings) {
+			if (binding.i == candidate.i && binding.j == candidate.j) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void initTrees() {
+		for (int i = 0; i < trees_count; i++) {
+			globals::Model3D& tree = trees[i];
+			glm::mat4 tree_model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
+			tree.setModelMatrix(tree_model_matrix);
+			tree.initializeBoundingBoxes();
+			tree.bindBoundingBoxesGPU();
+			tree.calculateBoundingBoxes();
+
+			globals_structs::terrainBinding terrain_binding_tree;
+			while (true) {
+				terrain_binding_tree.i = rand() % terrain_blocks_count;
+				terrain_binding_tree.j = rand() % terrain_blocks_count;
+				if (isOccupiedBounding(terrain_binding_tree) == false) {
+					break;
+				}
+			}
+			trees_bindings.push_back(terrain_binding_tree);
+
+			float z_noise = globals::getRandomFloat(-0.5f * terrain_block_distance_z_axis_i_coord,
+			                                        0.5f * terrain_block_distance_z_axis_i_coord);
+			float x_noise = globals::getRandomFloat(-0.5f * terrain_block_distance_x_axis_j_coord,
+			                                        0.5f * terrain_block_distance_x_axis_j_coord);
+			glm::vec3 noise = glm::vec3(x_noise, 0.0f, z_noise);
+			trees_random_noise.push_back(noise);
+
+			float y_rotation = globals::getRandomFloat(0.0f, 360.0f);
+			glm::vec3 rotation = glm::vec3(0.0f, y_rotation, 0.0f);
+			trees_random_rotations.push_back(rotation);
+			trees_random_scales.push_back(trees_scale);
+		}
+	}
+
 	void initShrooms() {
 		for (int i = 0; i < shrooms_count; i++) {
 			globals::Model3D& shroom = shrooms[i];
@@ -154,13 +239,11 @@ namespace scene
 			float z_rotation = globals::getRandomFloat(0.0f, 7.0f);
 			glm::vec3 rotation = glm::vec3(x_rotation, y_rotation, z_rotation);
 			shrooms_random_rotations.push_back(rotation);
-
-			float scale = globals::getRandomFloat(0.75f * shroom_scale, 1.25f * shroom_scale);
-			shrooms_random_scales.push_back(scale);
+			shrooms_random_scales.push_back(shroom_scale);
 		}
 	}
 
-	void initHouse1() {
+	void initHouses() {
 		glm::mat4 house1_model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, house1_default_y, 0.0f));
 		house1.setModelMatrix(house1_model_matrix);
 		house1.initializeBoundingBoxes();
@@ -168,6 +251,26 @@ namespace scene
 		house1.calculateBoundingBoxes();
 		terrain_binding_house1.i = 3;
 		terrain_binding_house1.j = 2;
+
+		glm::mat4 house2_model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, house2_default_y, 0.0f));
+		house2.setModelMatrix(house2_model_matrix);
+		house2.initializeBoundingBoxes();
+		house2.bindBoundingBoxesGPU();
+		house2.calculateBoundingBoxes();
+		terrain_binding_house2.i = 1;
+		terrain_binding_house2.j = 3;
+
+		glm::mat4 house3_model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, house3_default_y, 0.0f));
+		house3.setModelMatrix(house3_model_matrix);
+		house3.initializeBoundingBoxes();
+		house3.bindBoundingBoxesGPU();
+		house3.calculateBoundingBoxes();
+		terrain_binding_house3.i = 1;
+		terrain_binding_house3.j = 1;
+
+		banished_terrain_bindings.push_back(terrain_binding_house1);
+		banished_terrain_bindings.push_back(terrain_binding_house2);
+		banished_terrain_bindings.push_back(terrain_binding_house3);
 	}
 
 
@@ -287,6 +390,64 @@ namespace scene
 	}
 
 
+	void renderTrees(bool depth) {
+		globals::Shader& shader = globals::getBasicShader();
+		globals::Shader& depthShader = globals::getDepthShader();
+		globals_structs::ShaderLocationsBasic& shaderLocations = globals::getBasicShaderLocations();
+		globals_structs::ShaderLocationsDepth& depthShaderLocations = globals::getDepthShaderLocations();
+
+		if (depth == false) {
+			shader.useShaderProgram();
+		}
+		else {
+			depthShader.useShaderProgram();
+		}
+
+		for (int i = 0; i < trees_count; i++) {
+			globals::Model3D& tree = trees[i];
+			globals_structs::terrainBinding& terrain_binding_shroom = trees_bindings[i];
+			glm::vec3& noise = trees_random_noise[i];
+			glm::vec3& rotation = trees_random_rotations[i];
+
+
+			float terrain_binding_z = terrain_binding_shroom.i * terrain_block_distance_z_axis_i_coord;
+			float terrain_binding_x = terrain_binding_shroom.j * terrain_block_distance_x_axis_j_coord;
+
+			float terrain_block_x = terrain_binding_x + noise.x;
+			float terrain_block_y = trees_default_y;
+			float terrain_block_z = terrain_binding_z + noise.z;
+
+			float scale = trees_random_scales[i];
+			glm::mat4 transformation_base = glm::scale(glm::mat4(1.0f), glm::vec3(scale));
+			transformation_base = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.x), glm::vec3(1.0f, 0, 0)) *
+				transformation_base;
+			transformation_base = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.y), glm::vec3(0, 1.0f, 0)) *
+				transformation_base;
+			transformation_base = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.z), glm::vec3(0, 0, 1.0f)) *
+				transformation_base;
+			transformation_base = glm::translate(glm::mat4(1.0f),
+			                                     glm::vec3(terrain_block_x, terrain_block_y,
+			                                               terrain_block_z)) *
+				transformation_base;
+
+			tree.setModelMatrix(transformation_base);
+			tree.recalculateNormal();
+
+			if (depth == false) {
+				glUniformMatrix4fv(shaderLocations.modelLoc, 1, GL_FALSE, glm::value_ptr(tree.getModelMatrix()));
+				glUniformMatrix3fv(shaderLocations.normalMatrixLoc, 1, GL_FALSE,
+				                   glm::value_ptr(tree.getNormalMatrix()));
+
+				tree.calculateBoundingBoxes();
+				tree.Draw(shader);
+			}
+			else {
+				glUniformMatrix4fv(depthShaderLocations.model, 1, GL_FALSE, glm::value_ptr(tree.getModelMatrix()));
+				tree.DrawDepth(depthShader);
+			}
+		}
+	}
+
 	void renderShrooms(bool depth) {
 		globals::Shader& shader = globals::getBasicShader();
 		globals::Shader& depthShader = globals::getDepthShader();
@@ -311,7 +472,7 @@ namespace scene
 			float terrain_binding_x = terrain_binding_shroom.j * terrain_block_distance_x_axis_j_coord;
 
 			float terrain_block_x = terrain_binding_x + noise.x;
-			float terrain_block_y = shroom_default_y * shrooms_random_scales[i];
+			float terrain_block_y = shroom_default_y;
 			float terrain_block_z = terrain_binding_z + noise.z;
 
 			float scale = shrooms_random_scales[i];
@@ -365,6 +526,86 @@ namespace scene
 		return lightSpaceTrMatrix;
 	}
 
+	void renderHouse3(bool depth) {
+		globals::Shader& shader = globals::getBasicShader();
+		globals::Shader& depthShader = globals::getDepthShader();
+		globals_structs::ShaderLocationsBasic& shaderLocations = globals::getBasicShaderLocations();
+		globals_structs::ShaderLocationsDepth& depthShaderLocations = globals::getDepthShaderLocations();
+
+		if (depth == false) {
+			shader.useShaderProgram();
+		}
+		else {
+			depthShader.useShaderProgram();
+		}
+
+		glm::mat4 transformation_base = glm::scale(glm::mat4(1.0f), glm::vec3(house3_scale));
+		transformation_base = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
+			transformation_base;
+		transformation_base = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, house3_default_y, 0.0f)) *
+			transformation_base;
+		transformation_base = glm::translate(glm::mat4(1.0f),
+		                                     glm::vec3(terrain_block_distance_x_axis_j_coord * terrain_binding_house3.j,
+		                                               0.0f,
+		                                               terrain_block_distance_z_axis_i_coord * terrain_binding_house3.
+		                                               i)) *
+			transformation_base;
+		house3.setModelMatrix(transformation_base);
+		house3.recalculateNormal();
+
+		if (depth == false) {
+			glUniformMatrix4fv(shaderLocations.modelLoc, 1, GL_FALSE, glm::value_ptr(house3.getModelMatrix()));
+			glUniformMatrix3fv(shaderLocations.normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(house3.getNormalMatrix()));
+
+			house3.calculateBoundingBoxes();
+			house3.Draw(shader);
+		}
+		else {
+			glUniformMatrix4fv(depthShaderLocations.model, 1, GL_FALSE, glm::value_ptr(house3.getModelMatrix()));
+			house3.DrawDepth(depthShader);
+		}
+	}
+
+	void renderHouse2(bool depth) {
+		globals::Shader& shader = globals::getBasicShader();
+		globals::Shader& depthShader = globals::getDepthShader();
+		globals_structs::ShaderLocationsBasic& shaderLocations = globals::getBasicShaderLocations();
+		globals_structs::ShaderLocationsDepth& depthShaderLocations = globals::getDepthShaderLocations();
+
+		if (depth == false) {
+			shader.useShaderProgram();
+		}
+		else {
+			depthShader.useShaderProgram();
+		}
+
+		glm::mat4 transformation_base = glm::scale(glm::mat4(1.0f), glm::vec3(house2_scale));
+		transformation_base = glm::rotate(glm::mat4(1.0f), glm::radians(-45.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
+			transformation_base;
+		transformation_base = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, house2_default_y, 0.0f)) *
+			transformation_base;
+		transformation_base = glm::translate(glm::mat4(1.0f),
+		                                     glm::vec3(terrain_block_distance_x_axis_j_coord * terrain_binding_house2.j,
+		                                               0.0f,
+		                                               terrain_block_distance_z_axis_i_coord * terrain_binding_house2.
+		                                               i)) *
+			transformation_base;
+		house2.setModelMatrix(transformation_base);
+		house2.recalculateNormal();
+
+		if (depth == false) {
+			glUniformMatrix4fv(shaderLocations.modelLoc, 1, GL_FALSE, glm::value_ptr(house2.getModelMatrix()));
+			glUniformMatrix3fv(shaderLocations.normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(house2.getNormalMatrix()));
+
+			house2.calculateBoundingBoxes();
+			house2.Draw(shader);
+		}
+		else {
+			glUniformMatrix4fv(depthShaderLocations.model, 1, GL_FALSE, glm::value_ptr(house2.getModelMatrix()));
+			house2.DrawDepth(depthShader);
+		}
+	}
+
 	void renderHouse1(bool depth) {
 		globals::Shader& shader = globals::getBasicShader();
 		globals::Shader& depthShader = globals::getDepthShader();
@@ -379,7 +620,7 @@ namespace scene
 		}
 
 		glm::mat4 transformation_base = glm::scale(glm::mat4(1.0f), glm::vec3(house1_scale));
-		transformation_base = glm::rotate(glm::mat4(1.0f), glm::radians(135.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
+		transformation_base = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
 			transformation_base;
 		transformation_base = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, house1_default_y, 0.0f)) *
 			transformation_base;
@@ -389,7 +630,6 @@ namespace scene
 		                                               terrain_block_distance_z_axis_i_coord * terrain_binding_house1.
 		                                               i)) *
 			transformation_base;
-
 		house1.setModelMatrix(transformation_base);
 		house1.recalculateNormal();
 
@@ -407,5 +647,11 @@ namespace scene
 
 			house1.DrawDepth(depthShader);
 		}
+	}
+
+	void renderHouses(bool depth) {
+		renderHouse1(depth);
+		renderHouse2(depth);
+		renderHouse3(depth);
 	}
 }

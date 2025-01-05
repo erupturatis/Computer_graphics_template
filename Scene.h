@@ -20,17 +20,20 @@ namespace scene
 	void loadBook();
 	void loadTerrain();
 	void loadShrooms();
-	void loadHouse1();
+	void loadTrees();
+	void loadHouses();
 
 	void initTerrain();
+	void initTrees();
 	void initShrooms();
 	void initBook();
-	void initHouse1();
+	void initHouses();
 
 	void renderTerrain(bool depth = false);
+	void renderTrees(bool depth = false);
 	void renderShrooms(bool depth = false);
 	void renderBook(bool depth = false);
-	void renderHouse1(bool depth = false);
+	void renderHouses(bool depth = false);
 
 	glm::mat4 calculateLightSpaceMatrix();
 }

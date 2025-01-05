@@ -39,8 +39,10 @@ globals::Shader fragPosLightSpaceShader;
 
 void loadModels() {
 	scene::loadTerrain();
-	scene::loadHouse1();
+	scene::loadHouses();
+
 	scene::loadShrooms();
+	scene::loadTrees();
 	scene::loadBook();
 }
 
@@ -136,29 +138,27 @@ void initShadowsSettings() {
 
 void initObjectsScene() {
 	scene::initTerrain();
-	scene::initHouse1();
+	scene::initHouses();
+
 	scene::initShrooms();
+	scene::initTrees();
 	scene::initBook();
 }
 
+void renderScene(bool depth) {
+	scene::renderTerrain(depth);
+	scene::renderHouses(depth);
 
-void renderSceneDepth() {
-	scene::renderTerrain(true);
-	scene::renderHouse1(true);
-	scene::renderShrooms(true);
-	scene::renderBook(true);
-}
+	scene::renderShrooms(depth);
+	scene::renderBook(depth);
+	scene::renderTrees(depth);
 
-void renderSceneNormal() {
-	scene::renderTerrain(false);
-	scene::renderHouse1(false);
-	scene::renderShrooms(false);
-	scene::renderBook(false);
-
-	if (globals_configs::getWireframeMode())
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	else
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	if (depth == false) {
+		if (globals_configs::getWireframeMode())
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		else
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 }
 
 unsigned int quadVAO = 0, quadVBO = 0;
@@ -218,7 +218,7 @@ void renderSceneWithShadows(bool renderDepth = false) {
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	initLightSpaceDepthShader();
-	renderSceneDepth();
+	renderScene(true);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	if (renderDepth == false) {
@@ -233,7 +233,7 @@ void renderSceneWithShadows(bool renderDepth = false) {
 		GLint fogLocation = glGetUniformLocation(globals::getBasicShader().shaderProgram, "applyFog");
 		glUniform1i(fogLocation, globals_configs::getApplyFog());
 
-		renderSceneNormal();
+		renderScene(false);
 	}
 	else {
 		renderDepthMap();

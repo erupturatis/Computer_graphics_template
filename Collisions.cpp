@@ -1,6 +1,9 @@
 #include "Collisions.h"
 
 bool checkCollision(globals::MOVE_DIRECTION direction) {
+	if (!globals_configs::getApplyCollisions()) {
+		return false;
+	}
 	std::vector<globals::Model3D*>& models = scene::getModels3D();
 	globals::Camera& myCamera = globals::getCamera();
 	glm::vec3 expectedNextPosition = myCamera.getNextPosition(direction, globals_configs::getCameraSpeed());
