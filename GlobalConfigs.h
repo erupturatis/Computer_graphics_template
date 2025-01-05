@@ -14,6 +14,12 @@ namespace globals_configs
     bool getWireframeMode();
     void setWireframeMode(bool wireframe);
 
+    bool getPolygonalMode();
+    void setPolygonalMode(bool polygonal);
+
+    bool getVertexMode();
+    void setVertexMode(bool wireframe);
+
     bool getAcceleratedDayNightCycle();
     void setAcceleratedDayNightCycle(bool accelerated);
 

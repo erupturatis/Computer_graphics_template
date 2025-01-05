@@ -5,7 +5,10 @@ namespace globals_configs
 {
     bool showBoundingBoxes = true;
     GLfloat cameraSpeed = 0.1f;
+
     bool wireframeMode = false;
+    bool vertexMode = false;
+
     bool acceleratedDayNightCycle = false;
     bool applyFog = false;
     bool applyCollisions = true;
@@ -24,6 +27,14 @@ namespace globals_configs
 
     void setApplyFog(bool fog) {
         globals_configs::applyFog = fog;
+    }
+
+    bool getVertexMode() {
+        return globals_configs::vertexMode;
+    }
+
+    void setVertexMode(bool vertex) {
+        globals_configs::vertexMode = vertex;
     }
 
     bool getWireframeMode() {

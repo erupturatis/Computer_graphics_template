@@ -156,8 +156,13 @@ void renderScene(bool depth) {
 	if (depth == false) {
 		if (globals_configs::getWireframeMode())
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		else
+		else if (globals_configs::getVertexMode()) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+			glPointSize(5.0f);
+		}
+		else {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
 	}
 }
 

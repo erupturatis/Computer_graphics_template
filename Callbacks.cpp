@@ -27,8 +27,21 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 	}
 
 	if (key == GLFW_KEY_C && action == GLFW_PRESS) {
-		bool currentSetting = globals_configs::getWireframeMode();
-		globals_configs::setWireframeMode(!currentSetting);
+		bool wireframe = globals_configs::getWireframeMode();
+		bool vertex = globals_configs::getVertexMode();
+
+		if (wireframe == false && vertex == false) {
+			globals_configs::setWireframeMode(true);
+			globals_configs::setVertexMode(false);
+		}
+		else if (wireframe == true && vertex == false) {
+			globals_configs::setWireframeMode(false);
+			globals_configs::setVertexMode(true);
+		}
+		else if (wireframe == false && vertex == true) {
+			globals_configs::setWireframeMode(false);
+			globals_configs::setVertexMode(false);
+		}
 	}
 
 	if (key == GLFW_KEY_X && action == GLFW_PRESS) {
